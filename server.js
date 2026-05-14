@@ -61,11 +61,11 @@ const pool = USE_MOCK_DB ? null : new Pool({
 
 app.use(express.json());
 app.use(cors());
-app.use(express.static(__dirname));
+app.use(express.static(__dirname + '/public'));
 
 // Serve index.html for root route
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
+  res.sendFile(__dirname + '/public/index.html');
 });
 
 // ============================================================================
