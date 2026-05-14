@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify OTP | Self Weld Industries</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../auth.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-wrapper">
+      <div class="auth-header">
+        <a href="../index.html" class="logo-link">Self Weld Industries</a>
+        <p class="subtitle">OTP Verification</p>
+      </div>
+
+      <form class="auth-form" id="otpForm">
+        <h1>Enter OTP</h1>
+        <p class="form-desc" id="phoneDisplay">OTP sent to your registered phone</p>
+
+        <div class="form-group">
+          <label for="otp">One-Time Password (OTP)</label>
+          <input
+            type="text"
+            id="otp"
+            name="otp"
+            placeholder="Enter 6-digit OTP"
+            required
+            inputmode="numeric"
+            pattern="[0-9]{6}"
+            maxlength="6"
+          />
+          <small class="hint">6-digit code sent to your phone</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">
+          <span>Verify OTP</span>
+          <span class="spinner" id="spinner" style="display: none;">⏳</span>
+        </button>
+
+        <div class="alert alert-error" id="errorMsg" style="display: none;"></div>
+      </form>
+
+      <div class="otp-info">
+        <p class="text-muted" id="timerDisplay">OTP expires in 5:00</p>
+        <button type="button" class="link-secondary" id="resendBtn">Resend OTP</button>
+        <span class="text-muted" id="resendCooldown" style="display: none;"></span>
+      </div>
+
+      <div class="auth-footer">
+        <a href="forgot-password.html" class="link-secondary">← Back</a>
+        <p class="text-muted">Secure verification</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('otpForm');
+    const errorMsg = document.getElementById('errorMsg');
+    const spinner = document.getElementById('spinner');
+    const otpInput = document.getElementById('otp');
+    const resendBtn = document.getElementById('resendBtn');
+    const resendCooldown = document.getElementById('resendCooldown');
+    const timerDisplay = document.getElementById('timerDisplay');
+
+    // Get phone from URL or session
+    const urlParams = new URLSearchParams(window.location.search);
+    const phone = urlParams.get('phone') || sessionStorage.getItem('resetPhone');
+
+    if (phone) {
+      document.getElementById('phoneDisplay').textContent = `OTP sent to ${phone.slice(-4).padStart(12, '*')}`;
+    }
+
+    // Only accept numeric input
+    otpInput.addEventListener('keypress', (e) => {
+      if (!/[0-9]/.test(e.key)) e.preventDefault();
+    });
+
+    // Timer
+    let timeLeft = 300; // 5 minutes
+    const timer = setInterval(() => {
+      timeLeft--;
+      const mins = Math.floor(timeLeft / 60);
+      const secs = timeLeft % 60;
+      timerDisplay.textContent = `OTP expires in ${mins}:${secs.toString().padStart(2, '0')}`;
+
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        timerDisplay.textContent = 'OTP expired. Request a new one.';
+        form.style.display = 'none';
+      }
+    }, 1000);
+
+    resendBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (!phone) return;
+
+      resendBtn.disabled = true;
+      errorMsg.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/auth/resend-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone })
+        });
+
+        if (!res.ok) throw new Error('Failed to resend OTP');
+
+        // Reset timer
+        clearInterval(timer);
+        timeLeft = 300;
+        timerDisplay.style.display = 'block';
+        resendCooldown.style.display = 'none';
+
+        // Cooldown
+        let cooldown = 60;
+        resendCooldown.textContent = `Resend in ${cooldown}s`;
+        resendCooldown.style.display = 'inline';
+        const cooldownTimer = setInterval(() => {
+          cooldown--;
+          resendCooldown.textContent = `Resend in ${cooldown}s`;
+          if (cooldown <= 0) {
+            clearInterval(cooldownTimer);
+            resendCooldown.style.display = 'none';
+            resendBtn.disabled = false;
+          }
+        }, 1000);
+      } catch (err) {
+        resendBtn.disabled = false;
+        errorMsg.textContent = 'Failed to resend OTP. Try again.';
+        errorMsg.style.display = 'block';
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.style.display = 'none';
+      spinner.style.display = 'inline';
+
+      const otp = otpInput.value.trim();
+
+      if (!otp || otp.length !== 6) {
+        showError('Please enter a valid 6-digit OTP');
+        spinner.style.display = 'none';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/auth/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, otp })
+        });
+
+        spinner.style.display = 'none';
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.message || 'Invalid OTP');
+          return;
+        }
+
+        sessionStorage.setItem('resetToken', data.token);
+        sessionStorage.setItem('resetPhone', phone);
+        window.location.href = 'reset-password.html';
+      } catch (err) {
+        spinner.style.display = 'none';
+        showError('Connection error. Please try again.');
+      }
+    });
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

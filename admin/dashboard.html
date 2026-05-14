@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Self Weld Industries</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../dashboard.css">
+  <link rel="stylesheet" href="../modules.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <i class="fas fa-tools"></i>
+          <span>Self Weld</span>
+        </div>
+        <button class="sidebar-toggle" id="sidebarToggle">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <nav class="sidebar-menu">
+        <a href="#dashboard" class="menu-item active" data-page="dashboard">
+          <i class="fas fa-chart-pie"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#customers" class="menu-item" data-page="customers">
+          <i class="fas fa-users"></i>
+          <span>Customers</span>
+        </a>
+        <a href="#inventory" class="menu-item" data-page="inventory">
+          <i class="fas fa-boxes"></i>
+          <span>Inventory</span>
+        </a>
+        <a href="#product-history" class="menu-item" data-page="product-history">
+          <i class="fas fa-history"></i>
+          <span>Product History</span>
+        </a>
+        <a href="#customer-history" class="menu-item" data-page="customer-history">
+          <i class="fas fa-user-clock"></i>
+          <span>Customer History</span>
+        </a>
+        <a href="#issues" class="menu-item" data-page="issues">
+          <i class="fas fa-tools"></i>
+          <span>Issues</span>
+        </a>
+        <a href="#reports" class="menu-item" data-page="reports">
+          <i class="fas fa-chart-bar"></i>
+          <span>Reports</span>
+        </a>
+        <a href="#settings" class="menu-item" data-page="settings">
+          <i class="fas fa-cog"></i>
+          <span>Settings</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="logout-btn" id="logoutBtn">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- TOP BAR -->
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <button class="menu-toggle" id="menuToggle">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search products, customers, invoices..." id="globalSearch">
+          </div>
+        </div>
+        
+        <div class="top-bar-right">
+          <div class="date-filter">
+            <select id="dateFilter">
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="week">Last 7 Days</option>
+              <option value="month">This Month</option>
+              <option value="custom">Custom Range</option>
+            </select>
+          </div>
+          
+          <div class="notifications">
+            <button class="notification-btn" id="notificationBtn">
+              <i class="fas fa-bell"></i>
+              <span class="notification-badge" id="notificationBadge">3</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown">
+              <div class="notification-header">
+                <h4>Notifications</h4>
+                <button class="mark-all-read">Mark all read</button>
+              </div>
+              <div class="notification-list" id="notificationList">
+                <!-- Notifications will be loaded here -->
+              </div>
+            </div>
+          </div>
+          
+          <div class="admin-profile">
+            <div class="profile-info">
+              <span class="admin-name">Admin</span>
+              <span class="admin-role">Administrator</span>
+            </div>
+            <div class="profile-avatar">
+              <i class="fas fa-user-circle"></i>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- DASHBOARD CONTENT -->
+      <div class="content-area" id="contentArea">
+        <!-- Dashboard Page -->
+        <div class="page active" id="dashboardPage">
+          <div class="page-header">
+            <h1>Dashboard</h1>
+            <p>Welcome back! Here's what's happening with your business today.</p>
+          </div>
+
+          <!-- Summary Cards -->
+          <div class="summary-cards">
+            <div class="summary-card">
+              <div class="card-icon customers">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="card-content">
+                <h3 id="totalCustomers">0</h3>
+                <p>Total Customers</p>
+                <span class="card-trend positive">+12 this month</span>
+              </div>
+            </div>
+
+            <div class="summary-card">
+              <div class="card-icon products">
+                <i class="fas fa-boxes"></i>
+              </div>
+              <div class="card-content">
+                <h3 id="totalProducts">0</h3>
+                <p>Total Products</p>
+                <span class="card-trend neutral">Active inventory</span>
+              </div>
+            </div>
+
+            <div class="summary-card">
+              <div class="card-icon stock">
+                <i class="fas fa-warehouse"></i>
+              </div>
+              <div class="card-content">
+                <h3 id="totalStock">0</h3>
+                <p>Available Stock</p>
+                <span class="card-trend negative">5 low stock</span>
+              </div>
+            </div>
+
+            <div class="summary-card">
+              <div class="card-icon sales">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <div class="card-content">
+                <h3 id="todaySales">₹0</h3>
+                <p>Today's Sales</p>
+                <span class="card-trend positive">+15% vs yesterday</span>
+              </div>
+            </div>
+
+            <div class="summary-card">
+              <div class="card-icon profit">
+                <i class="fas fa-coins"></i>
+              </div>
+              <div class="card-content">
+                <h3 id="todayProfit">₹0</h3>
+                <p>Today's Profit</p>
+                <span class="card-trend positive">+8% margin</span>
+              </div>
+            </div>
+
+            <div class="summary-card">
+              <div class="card-icon issues">
+                <i class="fas fa-exclamation-triangle"></i>
+              </div>
+              <div class="card-content">
+                <h3 id="pendingIssues">0</h3>
+                <p>Pending Issues</p>
+                <span class="card-trend negative">Needs attention</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Section -->
+          <div class="charts-section">
+            <div class="chart-card">
+              <div class="chart-header">
+                <h3>Sales Overview</h3>
+                <div class="chart-tabs">
+                  <button class="tab-btn active" data-chart="sales">Sales</button>
+                  <button class="tab-btn" data-chart="quantity">Quantity</button>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="salesChart"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-header">
+                <h3>Top Products</h3>
+              </div>
+              <div class="chart-container">
+                <canvas id="productsChart"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-header">
+                <h3>Payment Methods</h3>
+              </div>
+              <div class="chart-container">
+                <canvas id="paymentChart"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-header">
+                <h3>Monthly Profit</h3>
+              </div>
+              <div class="chart-container">
+                <canvas id="profitChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alerts Section -->
+          <div class="alerts-section">
+            <div class="alerts-header">
+              <h3>Alerts & Notifications</h3>
+              <button class="view-all-btn">View All</button>
+            </div>
+            <div class="alerts-grid" id="alertsGrid">
+              <!-- Alerts will be loaded here -->
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="quick-actions">
+            <h3>Quick Actions</h3>
+            <div class="actions-grid">
+              <button class="action-btn" data-action="add-product">
+                <i class="fas fa-plus"></i>
+                <span>Add Product</span>
+              </button>
+              <button class="action-btn" data-action="add-stock">
+                <i class="fas fa-warehouse"></i>
+                <span>Add Stock</span>
+              </button>
+              <button class="action-btn" data-action="create-sale">
+                <i class="fas fa-cash-register"></i>
+                <span>Create Sale</span>
+              </button>
+              <button class="action-btn" data-action="add-customer">
+                <i class="fas fa-user-plus"></i>
+                <span>Add Customer</span>
+              </button>
+              <button class="action-btn" data-action="add-issue">
+                <i class="fas fa-tools"></i>
+                <span>Add Issue</span>
+              </button>
+              <button class="action-btn" data-action="view-reports">
+                <i class="fas fa-chart-bar"></i>
+                <span>View Reports</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Other Pages (Placeholders) -->
+        <div class="page" id="inventoryPage">
+          <div id="inventoryListView">
+            <div class="page-header">
+              <h1>Inventory</h1>
+              <button class="primary-btn" onclick="openAddProductModal()">
+                <i class="fas fa-plus"></i> Add Product
+              </button>
+            </div>
+            <div class="module-search">
+              <input type="text" id="productSearch" placeholder="Search products..." oninput="loadProducts(this.value)">
+            </div>
+            <div class="module-table-wrap">
+              <table class="module-table"><thead><tr>
+                <th>Name</th><th>Category</th><th>Brand</th><th>Stock</th><th>Purchase ₹</th><th>Selling ₹</th><th>Warranty</th><th>Low Limit</th><th>Status</th><th>Actions</th>
+              </tr></thead><tbody id="inventoryTableBody"></tbody></table>
+            </div>
+            <div class="mobile-cards" id="inventoryCards"></div>
+          </div>
+          <div id="productHistoryView" style="display:none">
+            <div id="productHistoryContent"></div>
+          </div>
+        </div>
+
+        <div class="page" id="product-historyPage">
+          <div class="page-header">
+            <h1>Product History</h1>
+          </div>
+          <div class="module-search">
+            <input type="text" id="prodHistSearch" placeholder="Search product..." onkeydown="if(event.key==='Enter')searchProdHist(this.value)">
+            <button class="primary-btn" onclick="searchProdHist(document.getElementById('prodHistSearch').value)">Search</button>
+          </div>
+          <div id="prodHistResults"></div>
+        </div>
+
+        <div class="page" id="customer-historyPage">
+          <div class="page-header">
+            <h1>Customer History</h1>
+          </div>
+          <div class="module-search">
+            <input type="text" id="custHistSearch" placeholder="Search customer by name or phone..." onkeydown="if(event.key==='Enter')searchCustHist(this.value)">
+            <button class="primary-btn" onclick="searchCustHist(document.getElementById('custHistSearch').value)">Search</button>
+          </div>
+          <div id="custHistResults"></div>
+        </div>
+
+        <div class="page" id="customersPage">
+          <div id="customersListView">
+            <div class="page-header">
+              <h1>Customers</h1>
+              <button class="primary-btn" onclick="openAddCustomerModal()">
+                <i class="fas fa-user-plus"></i> Add Customer Record
+              </button>
+            </div>
+            <div class="module-search">
+              <input type="text" id="customerSearch" placeholder="Search by name or phone..." oninput="loadCustomers(this.value)">
+            </div>
+            <div class="module-table-wrap">
+              <table class="module-table"><thead><tr>
+                <th>Name</th><th>Phone</th><th>Product</th><th>Qty</th><th>Purchased</th><th>Warranty</th><th>Payment</th><th>Actions</th>
+              </tr></thead><tbody id="customersTableBody"></tbody></table>
+            </div>
+            <div class="mobile-cards" id="customersCards"></div>
+          </div>
+          <div id="customerHistoryView" style="display:none">
+            <div id="customerHistoryContent"></div>
+          </div>
+        </div>
+
+        <div class="page" id="issuesPage">
+          <div class="page-header">
+            <h1>Issues / Repair History</h1>
+          </div>
+          <div class="module-search">
+            <select id="issueStatusFilter" onchange="loadIssues(this.value)">
+              <option value="">All Status</option>
+              <option value="Reported">Reported</option>
+              <option value="Checking">Checking</option>
+              <option value="Fixed">Fixed</option>
+              <option value="Returned to Customer">Returned</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="module-table-wrap">
+            <table class="module-table"><thead><tr>
+              <th>Customer</th><th>Product</th><th>Date</th><th>Issue</th><th>Status</th><th>Warranty</th><th>Charges</th><th>Actions</th>
+            </tr></thead><tbody id="issuesTableBody"></tbody></table>
+          </div>
+          <div class="mobile-cards" id="issuesCards"></div>
+        </div>
+
+        <div class="page" id="reportsPage">
+          <div class="page-header">
+            <h1>Reports</h1>
+          </div>
+          <div class="content-placeholder">
+            <i class="fas fa-chart-bar"></i>
+            <h3>Business Reports</h3>
+            <p>Generate sales, profit, inventory, and GST reports.</p>
+          </div>
+        </div>
+
+        <div class="page" id="settingsPage">
+          <div class="page-header">
+            <h1>Settings</h1>
+          </div>
+          <div class="content-placeholder">
+            <i class="fas fa-cog"></i>
+            <h3>System Settings</h3>
+            <p>Configure business details, GST, invoices, and system preferences.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODALS -->
+  <!-- Customer Modal -->
+  <div class="modal-overlay" id="customerModal">
+    <div class="modal-box">
+      <h2 id="customerFormTitle">Add Customer Record</h2>
+      <form id="customerForm" onsubmit="event.preventDefault();saveCustomer()">
+        <input type="hidden" id="customerFormId" value="">
+        <div class="form-row">
+          <div class="form-group"><label>Customer Name *</label><input type="text" name="name" id="custName" required></div>
+          <div class="form-group"><label>Phone Number *</label><input type="text" name="phone" id="custPhone" required></div>
+        </div>
+        <div class="form-group"><label>Product *</label><select name="product_id" id="customerProductSelect" required><option value="">-- Select --</option></select></div>
+        <div class="form-row">
+          <div class="form-group"><label>Quantity *</label><input type="number" name="quantity" value="1" min="1" required></div>
+          <div class="form-group"><label>Purchased On *</label><input type="date" name="purchased_on" required></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label><input type="checkbox" id="custWarrantyAvail"> Warranty Available</label></div>
+          <div class="form-group"><label>Warranty End Date</label><input type="date" name="warranty_end_date"></div>
+        </div>
+        <div class="form-group"><label>Warranty Start Date</label><input type="date" name="warranty_start_date"></div>
+        <div class="form-row">
+          <div class="form-group"><label>Payment Status</label><select name="payment_status"><option>Paid</option><option selected>Pending</option><option>Partially Paid</option></select></div>
+          <div class="form-group"><label>Amount Paid</label><input type="number" name="amount_paid" step="0.01" value="0"></div>
+        </div>
+        <div class="form-group"><label>Notes</label><textarea name="notes"></textarea></div>
+        <div class="modal-actions"><button type="button" class="btn-cancel" onclick="hideModal('customerModal')">Cancel</button><button type="submit" class="btn-save">Save</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Product Modal -->
+  <div class="modal-overlay" id="productModal">
+    <div class="modal-box">
+      <h2 id="productFormTitle">Add Product</h2>
+      <form id="productForm" onsubmit="event.preventDefault();saveProduct()">
+        <input type="hidden" id="productFormId" value="">
+        <div class="form-group"><label>Product Name *</label><input type="text" name="name" id="prodName" required></div>
+        <div class="form-row">
+          <div class="form-group"><label>Category</label><input type="text" name="category" id="prodCategory"></div>
+          <div class="form-group"><label>Brand</label><input type="text" name="brand" id="prodBrand"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Opening Quantity *</label><input type="number" name="current_quantity" id="prodQuantity" min="0" required></div>
+          <div class="form-group"><label>Low Stock Alert</label><input type="number" name="low_stock_quantity" id="prodLowStock" value="5"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Purchase Price</label><input type="number" name="purchase_price" id="prodPurchasePrice" step="0.01"></div>
+          <div class="form-group"><label>Selling Price</label><input type="number" name="selling_price" id="prodSellingPrice" step="0.01"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label><input type="checkbox" id="prodWarrantyAvail"> Warranty Available</label></div>
+          <div class="form-group"><label>Warranty Period</label><input type="text" name="warranty_period" id="prodWarrantyPeriod" placeholder="e.g. 1 Year"></div>
+        </div>
+        <div class="form-group"><label>Notes</label><textarea name="notes" id="prodNotes"></textarea></div>
+        <div class="modal-actions"><button type="button" class="btn-cancel" onclick="hideModal('productModal')">Cancel</button><button type="submit" class="btn-save">Save</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Vendor Stock Modal -->
+  <div class="modal-overlay" id="vendorStockModal">
+    <div class="modal-box">
+      <h2>Add Vendor Stock</h2>
+      <form id="vendorStockForm" onsubmit="event.preventDefault();saveVendorStock()">
+        <input type="hidden" name="product_id" id="vendorProductId">
+        <div class="form-group"><label>Vendor Name *</label><input type="text" name="vendor_name" required></div>
+        <div class="form-row">
+          <div class="form-group"><label>Quantity Bought *</label><input type="number" name="quantity_bought" min="1" required></div>
+          <div class="form-group"><label>Bought On *</label><input type="date" name="bought_on" required></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Price Per Unit</label><input type="number" name="purchase_price_per_unit" step="0.01"></div>
+          <div class="form-group"><label>Total Amount</label><input type="number" name="total_amount" step="0.01"></div>
+        </div>
+        <div class="form-group"><label>Notes</label><textarea name="notes"></textarea></div>
+        <div class="modal-actions"><button type="button" class="btn-cancel" onclick="hideModal('vendorStockModal')">Cancel</button><button type="submit" class="btn-save">Save</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Issue Modal -->
+  <div class="modal-overlay" id="issueModal">
+    <div class="modal-box">
+      <h2>Add Issue</h2>
+      <form id="issueForm" onsubmit="event.preventDefault();saveIssue()">
+        <input type="hidden" name="cph_id" id="issueCphId">
+        <div class="form-row">
+          <div class="form-group"><label>Issue Date *</label><input type="date" name="issue_date" id="issueDate" required></div>
+          <div class="form-group"><label>Status</label><select name="issue_status"><option>Reported</option><option>Checking</option><option>Fixed</option><option>Returned to Customer</option><option>Rejected</option></select></div>
+        </div>
+        <div class="form-group"><label>Issue Description *</label><textarea name="issue_description" required></textarea></div>
+        <div class="form-group"><label><input type="checkbox" id="issueChargesApplicable"> Charges Applicable</label></div>
+        <div class="form-row">
+          <div class="form-group"><label>Charge Reason</label><input type="text" name="charge_reason"></div>
+          <div class="form-group"><label>Charge Amount</label><input type="number" name="charge_amount" step="0.01" value="0"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Amount Paid</label><input type="number" name="amount_paid" step="0.01" value="0"></div>
+          <div class="form-group"><label>Balance</label><input type="number" name="balance_amount" step="0.01" value="0"></div>
+        </div>
+        <div class="form-group"><label>Payment Mode</label><select name="payment_mode"><option value="">--</option><option>Cash</option><option>UPI</option><option>PhonePe</option><option>Paytm</option><option>Card</option><option>Other</option></select></div>
+        <div class="form-group"><label>Notes</label><textarea name="notes"></textarea></div>
+        <div class="modal-actions"><button type="button" class="btn-cancel" onclick="hideModal('issueModal')">Cancel</button><button type="submit" class="btn-save">Save</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Fix Issue Modal -->
+  <div class="modal-overlay" id="fixModal">
+    <div class="modal-box">
+      <h2>Mark Issue as Fixed</h2>
+      <form id="fixForm" onsubmit="event.preventDefault();saveFixIssue()">
+        <input type="hidden" name="issue_id" id="fixIssueId">
+        <div class="form-group"><label>Fixed Date & Time *</label><input type="datetime-local" name="fixed_datetime" id="fixDatetime" required></div>
+        <div class="form-group"><label>Fix Done Details *</label><textarea name="fix_done_details" required></textarea></div>
+        <div class="form-group"><label>Parts Replaced</label><input type="text" name="parts_replaced"></div>
+        <div class="form-group"><label><input type="checkbox" id="fixChargesApplicable"> Charges Applicable</label></div>
+        <div class="form-row">
+          <div class="form-group"><label>Charge Amount</label><input type="number" name="charge_amount" step="0.01" value="0"></div>
+          <div class="form-group"><label>Amount Paid</label><input type="number" name="amount_paid" step="0.01" value="0"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Balance</label><input type="number" name="balance_amount" step="0.01" value="0"></div>
+          <div class="form-group"><label>Payment Mode</label><select name="payment_mode"><option value="">--</option><option>Cash</option><option>UPI</option><option>PhonePe</option><option>Paytm</option><option>Card</option><option>Other</option></select></div>
+        </div>
+        <div class="form-group"><label><input type="checkbox" id="fixReturned"> Returned to Customer</label></div>
+        <div class="form-group"><label>Returned Date & Time</label><input type="datetime-local" name="returned_datetime"></div>
+        <div class="form-group"><label>Final Notes</label><textarea name="final_notes"></textarea></div>
+        <div class="modal-actions"><button type="button" class="btn-cancel" onclick="hideModal('fixModal')">Cancel</button><button type="submit" class="btn-save">Save</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Warranty Edit Modal -->
+  <div class="modal-overlay" id="warrantyModal">
+    <div class="modal-box">
+      <h2>Edit Warranty</h2>
+      <form id="warrantyForm" onsubmit="event.preventDefault();saveWarranty()">
+        <input type="hidden" name="cph_id" id="warrantyCphId">
+        <div class="form-group"><label><input type="checkbox" id="warAvail"> Warranty Available</label></div>
+        <div class="form-row">
+          <div class="form-group"><label>Warranty Start</label><input type="date" name="warranty_start_date" id="warStart"></div>
+          <div class="form-group"><label>Warranty End</label><input type="date" name="warranty_end_date" id="warEnd"></div>
+        </div>
+        <div class="form-group"><label><input type="checkbox" id="warExtended"> Warranty Extended</label></div>
+        <div class="form-group"><label>Extended End Date</label><input type="date" name="extended_warranty_end_date" id="warExtEnd"></div>
+        <div class="form-group"><label>Extension Reason</label><textarea name="warranty_extension_reason" id="warExtReason"></textarea></div>
+        <div class="modal-actions"><button type="button" class="btn-cancel" onclick="hideModal('warrantyModal')">Cancel</button><button type="submit" class="btn-save">Save</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../dashboard.js"></script>
+  <script src="../modules.js"></script>
+</body>
+</html>

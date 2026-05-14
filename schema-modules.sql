@@ -1,0 +1,104 @@
+-- Self Weld Industries - Customer & Inventory Module Schema
+
+CREATE TABLE IF NOT EXISTS customers (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  phone VARCHAR(15) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS products (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(200) NOT NULL,
+  category VARCHAR(100),
+  brand VARCHAR(100),
+  current_quantity INT DEFAULT 0,
+  purchase_price DECIMAL(10,2),
+  selling_price DECIMAL(10,2),
+  warranty_available BOOLEAN DEFAULT false,
+  warranty_period VARCHAR(50),
+  low_stock_quantity INT DEFAULT 5,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS customer_product_history (
+  id SERIAL PRIMARY KEY,
+  customer_id INT REFERENCES customers(id),
+  product_id INT REFERENCES products(id),
+  quantity INT NOT NULL DEFAULT 1,
+  purchased_on DATE NOT NULL,
+  warranty_available BOOLEAN DEFAULT false,
+  warranty_start_date DATE,
+  warranty_end_date DATE,
+  warranty_extended BOOLEAN DEFAULT false,
+  extended_warranty_end_date DATE,
+  warranty_extension_reason TEXT,
+  payment_status VARCHAR(20) DEFAULT 'Pending',
+  amount_paid DECIMAL(10,2) DEFAULT 0,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS vendor_stock_history (
+  id SERIAL PRIMARY KEY,
+  product_id INT REFERENCES products(id),
+  vendor_name VARCHAR(100) NOT NULL,
+  quantity_bought INT NOT NULL,
+  bought_on DATE NOT NULL,
+  purchase_price_per_unit DECIMAL(10,2),
+  total_amount DECIMAL(10,2),
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS product_issues (
+  id SERIAL PRIMARY KEY,
+  customer_product_history_id INT REFERENCES customer_product_history(id),
+  issue_date DATE NOT NULL,
+  issue_description TEXT NOT NULL,
+  warranty_status_at_issue VARCHAR(20),
+  issue_status VARCHAR(30) DEFAULT 'Reported',
+  fixed_datetime TIMESTAMP,
+  fix_done_details TEXT,
+  parts_replaced TEXT,
+  charges_applicable BOOLEAN DEFAULT false,
+  charge_reason TEXT,
+  charge_amount DECIMAL(10,2) DEFAULT 0,
+  amount_paid DECIMAL(10,2) DEFAULT 0,
+  balance_amount DECIMAL(10,2) DEFAULT 0,
+  payment_mode VARCHAR(20),
+  payment_date DATE,
+  returned_to_customer BOOLEAN DEFAULT false,
+  returned_datetime TIMESTAMP,
+  final_notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS inventory_transactions (
+  id SERIAL PRIMARY KEY,
+  product_id INT REFERENCES products(id),
+  transaction_type VARCHAR(50) NOT NULL,
+  quantity_in INT DEFAULT 0,
+  quantity_out INT DEFAULT 0,
+  balance_after INT DEFAULT 0,
+  reference_type VARCHAR(50),
+  reference_id INT,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS warranty_audit_logs (
+  id SERIAL PRIMARY KEY,
+  customer_product_history_id INT REFERENCES customer_product_history(id),
+  old_warranty_end DATE,
+  new_warranty_end DATE,
+  reason TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
