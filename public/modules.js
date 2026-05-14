@@ -6,6 +6,10 @@ async function api(path, opts = {}) {
   return res.json();
 }
 
+function refreshDashboardCounts() {
+  if (window.dashboardInstance) window.dashboardInstance.loadRealData();
+}
+
 function formatDate(d) { return d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'; }
 function formatCurrency(n) { return '₹' + (+n || 0).toLocaleString('en-IN'); }
 
@@ -85,6 +89,7 @@ async function saveCustomer() {
   }
   hideModal('customerModal');
   loadCustomers();
+  refreshDashboardCounts();
 }
 
 async function editCustomer(id) {
@@ -213,6 +218,7 @@ async function saveProduct() {
   }
   hideModal('productModal');
   loadProducts();
+  refreshDashboardCounts();
 }
 
 async function editProduct(id) {
@@ -251,6 +257,7 @@ async function saveVendorStock() {
   await api('/vendor-stock', { method: 'POST', body: JSON.stringify(body) });
   hideModal('vendorStockModal');
   loadProducts();
+  refreshDashboardCounts();
 }
 
 async function viewProductHistory(productId) {
@@ -342,6 +349,7 @@ async function saveIssue() {
   hideModal('issueModal');
   loadIssues();
   loadCustomers();
+  refreshDashboardCounts();
 }
 
 function openFixModal(issueId) {
@@ -362,6 +370,7 @@ async function saveFixIssue() {
   await api('/issues/' + issueId + '/fix', { method: 'PUT', body: JSON.stringify(body) });
   hideModal('fixModal');
   loadIssues();
+  refreshDashboardCounts();
 }
 
 async function editIssue(id) {
