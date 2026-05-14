@@ -55,7 +55,8 @@ let mockDB = {
 })();
 
 const pool = USE_MOCK_DB ? null : new Pool({
-  connectionString: process.env.DATABASE_URL
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
 app.use(express.json());
@@ -516,6 +517,7 @@ function isValidPassword(password) {
 // MODULE ROUTES (Customers, Products, Inventory, Issues)
 // ============================================================================
 const moduleRoutes = require('./routes-modules');
+moduleRoutes.setPool(pool, USE_MOCK_DB);
 app.use('/api', moduleRoutes);
 
 // ============================================================================
