@@ -51,7 +51,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
     await pool.query('UPDATE admins SET last_login_at=NOW() WHERE id=$1', [r.rows[0].id]);
     res.json({ message: 'Login successful', token: generateToken(r.rows[0]), admin: { id: r.rows[0].id, name: r.rows[0].name, email: r.rows[0].email, phone: r.rows[0].phone } });
-  } catch(e) { console.error('Login error:', e.message); res.status(500).json({ message: 'Server error', detail: e.message }); }
+  } catch(e) { console.error('Login error:', e.message); res.status(500).json({ message: 'Server error' }); }
 });
 
 // VERIFY TOKEN
@@ -122,14 +122,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
 });
 
 // HEALTH CHECK
-app.get('/api/health', async (req, res) => {
-  try {
-    const r = await pool.query('SELECT NOW() as time, current_database() as db');
-    res.json({ status: 'ok', db: r.rows[0].db, time: r.rows[0].time, env_set: !!process.env.DATABASE_URL });
-  } catch(e) {
-    res.json({ status: 'db_error', error: e.message, env_set: !!process.env.DATABASE_URL, url_preview: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 30) + '...' : 'NOT SET' });
-  }
-});
+app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
 // MODULE ROUTES
 const path = require('path');
