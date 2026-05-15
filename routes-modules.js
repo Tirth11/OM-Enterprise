@@ -4,16 +4,16 @@ let pool = null, USE_MOCK = true;
 router.setPool = (p, m) => { pool = p; USE_MOCK = m; };
 const q = async (text, params) => USE_MOCK ? null : pool.query(text, params);
 
-let mock = { customers: [], products: [], cph: [], vsh: [], issues: [], itx: [], wal: [], nid: { c:1, p:1, h:1, v:1, i:1, t:1, w:1 } };
+let mock = { customers: [], products: [], cph: [], vsh: [], issues: [], itx: [], wal: [], categories: ['Welding Machine','Power Tools','Welding Rods','Welding Cables','Accessories'], brands: ['Esab','Ador','D&H Secheron','Bosch','Makita','Stanley'], nid: { c:1, p:1, h:1, v:1, i:1, t:1, w:1 } };
 
 // CUSTOMERS
 router.get('/customers', async (req, res) => {
   const { search } = req.query;
   if (!USE_MOCK) {
     const s = search ? `%${search}%` : '%';
-    const r = await q(`SELECT c.id, c.name, c.phone, h.id as cph_id, p.name as product_name, h.quantity, h.purchased_on, h.warranty_end_date, h.payment_status
+    const r = await q(`SELECT c.id, c.name, c.phone, c.created_at, c.updated_at, h.id as cph_id, p.name as product_name, p.category, p.brand, h.quantity, h.selling_price_per_qty, h.total_amount, h.amount_paid, h.balance_amount, h.paid_via, h.purchased_on, h.warranty_available, h.warranty_end_date, h.payment_status, h.notes
       FROM customers c LEFT JOIN customer_product_history h ON h.customer_id=c.id LEFT JOIN products p ON p.id=h.product_id
-      WHERE c.deleted_at IS NULL AND (c.name ILIKE $1 OR c.phone ILIKE $1) ORDER BY c.created_at DESC`, [s]);
+      WHERE c.deleted_at IS NULL AND (c.name ILIKE $1 OR c.phone ILIKE $1) ORDER BY h.purchased_on DESC NULLS LAST, c.created_at DESC`, [s]);
     return res.json(r.rows);
   }
   let list = mock.customers.filter(c => !c.deleted_at);
@@ -21,8 +21,8 @@ router.get('/customers', async (req, res) => {
   const result = [];
   for (const c of list) {
     const recs = mock.cph.filter(h => h.customer_id === c.id);
-    if (!recs.length) result.push({ ...c, product_name: '-', quantity: 0, purchased_on: null, warranty_end_date: null, payment_status: '-' });
-    else recs.forEach(r => { const p = mock.products.find(x => x.id === r.product_id); result.push({ ...c, cph_id: r.id, product_name: p ? p.name : '-', quantity: r.quantity, purchased_on: r.purchased_on, warranty_end_date: r.warranty_end_date, payment_status: r.payment_status }); });
+    if (!recs.length) result.push({ ...c, product_name: '-', quantity: 0, purchased_on: null, warranty_end_date: null, payment_status: '-', total_amount: 0, amount_paid: 0, balance_amount: 0 });
+    else recs.forEach(r => { const p = mock.products.find(x => x.id === r.product_id); result.push({ ...c, cph_id: r.id, product_name: p ? p.name : '-', category: p ? p.category : '', brand: p ? p.brand : '', quantity: r.quantity, selling_price_per_qty: r.selling_price_per_qty, total_amount: r.total_amount, amount_paid: r.amount_paid, balance_amount: r.balance_amount, paid_via: r.paid_via, purchased_on: r.purchased_on, warranty_available: r.warranty_available, warranty_end_date: r.warranty_end_date, payment_status: r.payment_status, notes: r.notes, purchase_created_at: r.created_at }); });
   }
   res.json(result);
 });
@@ -34,39 +34,65 @@ router.get('/customers/:id', async (req, res) => {
 });
 
 router.post('/customers', async (req, res) => {
-  const { name, phone, product_id, quantity, purchased_on, warranty_available, warranty_start_date, warranty_end_date, payment_status, amount_paid, notes } = req.body;
-  if (!name || !phone) return res.status(400).json({ message: 'Name and phone required' });
+  const { name, phone, product_id, quantity, purchased_on, warranty_available, warranty_start_date, warranty_end_date, selling_price_per_qty, total_amount, amount_paid, balance_amount, paid_via, payment_status, notes } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ message: 'Customer name required' });
 
   if (!USE_MOCK) {
-    let cr = await q('SELECT id FROM customers WHERE phone=$1 AND deleted_at IS NULL', [phone]);
     let custId;
-    if (cr.rows.length) { custId = cr.rows[0].id; await q('UPDATE customers SET name=$1, updated_at=NOW() WHERE id=$2', [name, custId]); }
-    else { const ins = await q('INSERT INTO customers(name,phone) VALUES($1,$2) RETURNING id', [name, phone]); custId = ins.rows[0].id; }
+    if (phone && phone.length >= 10) {
+      let cr = await q('SELECT id FROM customers WHERE phone=$1 AND deleted_at IS NULL', [phone]);
+      if (cr.rows.length) { custId = cr.rows[0].id; await q('UPDATE customers SET name=$1, updated_at=NOW() WHERE id=$2', [name.trim(), custId]); }
+      else { const ins = await q('INSERT INTO customers(name,phone) VALUES($1,$2) RETURNING id', [name.trim(), phone]); custId = ins.rows[0].id; }
+    } else {
+      const ins = await q('INSERT INTO customers(name,phone) VALUES($1,$2) RETURNING id', [name.trim(), phone||'']);
+      custId = ins.rows[0].id;
+    }
     if (product_id) {
-      const pr = await q('SELECT current_quantity FROM products WHERE id=$1 AND deleted_at IS NULL', [product_id]);
+      // Prevent duplicate: same customer + product + same purchased_on timestamp
+      const purchaseTime = purchased_on || new Date().toISOString().slice(0,16);
+      const dup = await q('SELECT id FROM customer_product_history WHERE customer_id=$1 AND product_id=$2 AND purchased_on=$3', [custId, product_id, purchaseTime]);
+      if (dup.rows.length) return res.status(400).json({ message: 'This purchase record already exists' });
+
+      const pr = await q('SELECT current_quantity, selling_price FROM products WHERE id=$1 AND deleted_at IS NULL', [product_id]);
       if (!pr.rows.length) return res.status(400).json({ message: 'Product not found' });
       const qty = +quantity || 1;
       if (qty > pr.rows[0].current_quantity) return res.status(400).json({ message: 'Stock not available. Available: ' + pr.rows[0].current_quantity });
-      await q(`INSERT INTO customer_product_history(customer_id,product_id,quantity,purchased_on,warranty_available,warranty_start_date,warranty_end_date,payment_status,amount_paid,notes) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-        [custId, product_id, qty, purchased_on, !!warranty_available, warranty_start_date||null, warranty_end_date||null, payment_status||'Pending', +amount_paid||0, notes||'']);
+      const sp = +selling_price_per_qty || +pr.rows[0].selling_price || 0;
+      const total = +total_amount || sp * qty;
+      const paid = +amount_paid || 0;
+      if (paid > total) return res.status(400).json({ message: 'Amount paid cannot exceed total amount' });
+      const balance = total - paid;
+      const status = paid >= total ? 'Paid' : paid > 0 ? 'Partially Paid' : 'Pending';
+      await q(`INSERT INTO customer_product_history(customer_id,product_id,quantity,purchased_on,warranty_available,warranty_start_date,warranty_end_date,selling_price_per_qty,total_amount,amount_paid,balance_amount,paid_via,payment_status,notes) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+        [custId, product_id, qty, purchaseTime, !!warranty_available, warranty_start_date||null, warranty_end_date||null, sp, total, paid, balance, paid_via||'', status, notes||'']);
       const newQty = pr.rows[0].current_quantity - qty;
       await q('UPDATE products SET current_quantity=$1, updated_at=NOW() WHERE id=$2', [newQty, product_id]);
-      await q(`INSERT INTO inventory_transactions(product_id,transaction_type,quantity_out,balance_after,reference_type,notes) VALUES($1,'Customer Product Given/Sold',$2,$3,'customer_product_history',$4)`, [product_id, qty, newQty, 'Sold to '+name]);
+      await q(`INSERT INTO inventory_transactions(product_id,transaction_type,quantity_out,balance_after,reference_type,notes) VALUES($1,'Customer Product Given/Sold',$2,$3,'customer_product_history',$4)`, [product_id, qty, newQty, 'Sold to '+name.trim()]);
     }
-    return res.json({ message: 'Customer record saved', customer: { id: custId, name, phone } });
+    return res.json({ message: 'Customer record saved', customer: { id: custId, name: name.trim(), phone: phone||'' } });
   }
   // Mock
-  let customer = mock.customers.find(c => c.phone === phone && !c.deleted_at);
-  if (!customer) { customer = { id: mock.nid.c++, name, phone, created_at: new Date(), updated_at: new Date(), deleted_at: null }; mock.customers.push(customer); }
-  else { customer.name = name; customer.updated_at = new Date(); }
+  let customer = phone ? mock.customers.find(c => c.phone === phone && !c.deleted_at) : null;
+  if (!customer) { customer = { id: mock.nid.c++, name: name.trim(), phone: phone||'', created_at: new Date(), updated_at: new Date(), deleted_at: null }; mock.customers.push(customer); }
+  else { customer.name = name.trim(); customer.updated_at = new Date(); }
   if (product_id) {
     const product = mock.products.find(p => p.id === +product_id && !p.deleted_at);
     if (!product) return res.status(400).json({ message: 'Product not found' });
     const qty = +quantity || 1;
     if (qty > product.current_quantity) return res.status(400).json({ message: 'Stock not available. Available: ' + product.current_quantity });
-    mock.cph.push({ id: mock.nid.h++, customer_id: customer.id, product_id: +product_id, quantity: qty, purchased_on: purchased_on||new Date().toISOString().split('T')[0], warranty_available: !!warranty_available, warranty_start_date: warranty_start_date||null, warranty_end_date: warranty_end_date||null, warranty_extended: false, extended_warranty_end_date: null, warranty_extension_reason: null, payment_status: payment_status||'Pending', amount_paid: +amount_paid||0, notes: notes||'', created_at: new Date(), updated_at: new Date() });
+    const purchaseTime = purchased_on||new Date().toISOString().slice(0,16);
+    // Prevent duplicate in mock
+    const dup = mock.cph.find(h => h.customer_id===customer.id && h.product_id===+product_id && h.purchased_on===purchaseTime);
+    if (dup) return res.status(400).json({ message: 'This purchase record already exists' });
+    const sp = +selling_price_per_qty || product.selling_price || 0;
+    const total = +total_amount || sp * qty;
+    const paid = +amount_paid || 0;
+    if (paid > total) return res.status(400).json({ message: 'Amount paid cannot exceed total amount' });
+    const balance = total - paid;
+    const status = paid >= total ? 'Paid' : paid > 0 ? 'Partially Paid' : 'Pending';
+    mock.cph.push({ id: mock.nid.h++, customer_id: customer.id, product_id: +product_id, quantity: qty, purchased_on: purchaseTime, warranty_available: !!warranty_available, warranty_start_date: warranty_start_date||null, warranty_end_date: warranty_end_date||null, warranty_extended: false, extended_warranty_end_date: null, selling_price_per_qty: sp, total_amount: total, amount_paid: paid, balance_amount: balance, paid_via: paid_via||'', payment_status: status, notes: notes||'', created_at: new Date(), updated_at: new Date() });
     product.current_quantity -= qty;
-    mock.itx.push({ id: mock.nid.t++, product_id: +product_id, transaction_type: 'Customer Product Given/Sold', quantity_in: 0, quantity_out: qty, balance_after: product.current_quantity, reference_type: 'customer_product_history', notes: 'Sold to '+name, created_at: new Date() });
+    mock.itx.push({ id: mock.nid.t++, product_id: +product_id, transaction_type: 'Customer Product Given/Sold', quantity_in: 0, quantity_out: qty, balance_after: product.current_quantity, reference_type: 'customer_product_history', notes: 'Sold to '+name.trim(), created_at: new Date() });
   }
   res.json({ message: 'Customer record saved', customer });
 });
@@ -99,10 +125,56 @@ router.get('/customers/:id/history', async (req, res) => {
 });
 
 
+// CATEGORY & BRAND MASTERS
+router.get('/categories', async (req, res) => {
+  if (!USE_MOCK) {
+    const r = await q('SELECT name FROM category_master WHERE deleted_at IS NULL ORDER BY name');
+    return res.json(r.rows.map(r => r.name));
+  }
+  res.json(mock.categories);
+});
+
+router.post('/categories', async (req, res) => {
+  const { name } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ message: 'Category name required' });
+  const n = name.trim();
+  if (!USE_MOCK) {
+    const exists = await q('SELECT id FROM category_master WHERE LOWER(name)=LOWER($1) AND deleted_at IS NULL', [n]);
+    if (exists.rows.length) return res.json({ message: 'Already exists' });
+    await q('INSERT INTO category_master(name) VALUES($1)', [n]);
+    return res.json({ message: 'Category added' });
+  }
+  if (!mock.categories.find(c => c.toLowerCase() === n.toLowerCase())) mock.categories.push(n);
+  res.json({ message: 'Category added' });
+});
+
+router.get('/brands', async (req, res) => {
+  if (!USE_MOCK) {
+    const r = await q('SELECT name FROM brand_master WHERE deleted_at IS NULL ORDER BY name');
+    return res.json(r.rows.map(r => r.name));
+  }
+  res.json(mock.brands);
+});
+
+router.post('/brands', async (req, res) => {
+  const { name } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ message: 'Brand name required' });
+  const n = name.trim();
+  if (!USE_MOCK) {
+    const exists = await q('SELECT id FROM brand_master WHERE LOWER(name)=LOWER($1) AND deleted_at IS NULL', [n]);
+    if (exists.rows.length) return res.json({ message: 'Already exists' });
+    await q('INSERT INTO brand_master(name) VALUES($1)', [n]);
+    return res.json({ message: 'Brand added' });
+  }
+  if (!mock.brands.find(b => b.toLowerCase() === n.toLowerCase())) mock.brands.push(n);
+  res.json({ message: 'Brand added' });
+});
+
+
 // PRODUCTS
 router.get('/products', async (req, res) => {
   const { search } = req.query;
-  if (!USE_MOCK) { const s = search ? `%${search}%` : '%'; const r = await q(`SELECT * FROM products WHERE deleted_at IS NULL AND (name ILIKE $1 OR category ILIKE $1 OR brand ILIKE $1) ORDER BY name`, [s]); return res.json(r.rows); }
+  if (!USE_MOCK) { const s = search ? `%${search}%` : '%'; const r = await q(`SELECT * FROM products WHERE deleted_at IS NULL AND (name ILIKE $1 OR category ILIKE $1 OR brand ILIKE $1) ORDER BY created_at DESC`, [s]); return res.json(r.rows); }
   let list = mock.products.filter(p => !p.deleted_at);
   if (search) { const s = search.toLowerCase(); list = list.filter(p => p.name.toLowerCase().includes(s) || (p.category||'').toLowerCase().includes(s) || (p.brand||'').toLowerCase().includes(s)); }
   res.json(list);
@@ -114,32 +186,76 @@ router.get('/products/:id', async (req, res) => {
 });
 
 router.post('/products', async (req, res) => {
-  const { name, category, brand, current_quantity, purchase_price, selling_price, warranty_available, warranty_period, low_stock_quantity, notes } = req.body;
-  if (!name) return res.status(400).json({ message: 'Product name required' });
-  const qty = +current_quantity || 0;
+  const { name, category, brand, purchase_price_per_qty, total_quantity, selling_price_per_qty, warranty_available, warranty_period, low_stock_quantity, notes } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ message: 'Product name required' });
+  const qty = +total_quantity || 0;
+  const ppq = +purchase_price_per_qty || 0;
+  const spq = +selling_price_per_qty || 0;
+  const totalPurchase = ppq * qty;
+  if (qty <= 0) return res.status(400).json({ message: 'Quantity must be greater than 0' });
+  if (ppq <= 0) return res.status(400).json({ message: 'Purchase price must be greater than 0' });
+  if (spq <= 0) return res.status(400).json({ message: 'Selling price must be greater than 0' });
+  if (warranty_available && !warranty_period) return res.status(400).json({ message: 'Warranty period required when warranty is available' });
+
   if (!USE_MOCK) {
     const r = await q(`INSERT INTO products(name,category,brand,current_quantity,purchase_price,selling_price,warranty_available,warranty_period,low_stock_quantity,notes) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
-      [name, category||'', brand||'', qty, +purchase_price||0, +selling_price||0, !!warranty_available, warranty_period||'', +low_stock_quantity||5, notes||'']);
-    if (qty > 0) await q(`INSERT INTO inventory_transactions(product_id,transaction_type,quantity_in,balance_after,reference_type,notes) VALUES($1,'Opening Stock',$2,$2,'product','Opening stock')`, [r.rows[0].id, qty]);
+      [name.trim(), category||'', brand||'', qty, ppq, spq, !!warranty_available, warranty_period||'', +low_stock_quantity||5, notes||'']);
+    await q(`INSERT INTO inventory_transactions(product_id,transaction_type,quantity_in,balance_after,reference_type,notes,purchase_price_per_qty,selling_price_per_qty,total_amount) VALUES($1,'New Product Created',$2,$2,'product','Initial stock entry',$3,$4,$5)`,
+      [r.rows[0].id, qty, ppq, spq, totalPurchase]);
     return res.json({ message: 'Product added', product: r.rows[0] });
   }
-  const product = { id: mock.nid.p++, name, category:category||'', brand:brand||'', current_quantity:qty, purchase_price:+purchase_price||0, selling_price:+selling_price||0, warranty_available:!!warranty_available, warranty_period:warranty_period||'', low_stock_quantity:+low_stock_quantity||5, notes:notes||'', created_at:new Date(), updated_at:new Date(), deleted_at:null };
+  const product = { id: mock.nid.p++, name: name.trim(), category:category||'', brand:brand||'', current_quantity:qty, purchase_price:ppq, selling_price:spq, warranty_available:!!warranty_available, warranty_period:warranty_period||'', low_stock_quantity:+low_stock_quantity||5, notes:notes||'', created_at:new Date(), updated_at:new Date(), deleted_at:null };
   mock.products.push(product);
-  if (qty > 0) mock.itx.push({ id:mock.nid.t++, product_id:product.id, transaction_type:'Opening Stock', quantity_in:qty, quantity_out:0, balance_after:qty, reference_type:'product', notes:'Opening stock', created_at:new Date() });
+  mock.itx.push({ id:mock.nid.t++, product_id:product.id, transaction_type:'New Product Created', quantity_in:qty, quantity_out:0, balance_after:qty, reference_type:'product', notes:'Initial stock entry', purchase_price_per_qty:ppq, selling_price_per_qty:spq, total_amount:totalPurchase, created_at:new Date() });
   res.json({ message: 'Product added', product });
 });
 
+router.post('/products/:id/add-inventory', async (req, res) => {
+  const { purchase_price_per_qty, total_quantity, selling_price_per_qty, notes } = req.body;
+  const qty = +total_quantity || 0;
+  const ppq = +purchase_price_per_qty || 0;
+  const spq = +selling_price_per_qty || 0;
+  if (qty <= 0) return res.status(400).json({ message: 'Quantity must be greater than 0' });
+  if (ppq <= 0) return res.status(400).json({ message: 'Purchase price must be greater than 0' });
+  if (spq <= 0) return res.status(400).json({ message: 'Selling price must be greater than 0' });
+  const totalPurchase = ppq * qty;
+
+  if (!USE_MOCK) {
+    const pr = await q('SELECT current_quantity FROM products WHERE id=$1 AND deleted_at IS NULL', [req.params.id]);
+    if (!pr.rows.length) return res.status(404).json({ message: 'Product not found' });
+    const newQty = pr.rows[0].current_quantity + qty;
+    await q('UPDATE products SET current_quantity=$1, purchase_price=$2, selling_price=$3, updated_at=NOW() WHERE id=$4', [newQty, ppq, spq, req.params.id]);
+    await q(`INSERT INTO inventory_transactions(product_id,transaction_type,quantity_in,balance_after,reference_type,notes,purchase_price_per_qty,selling_price_per_qty,total_amount) VALUES($1,'Inventory Added',$2,$3,'add_inventory',$4,$5,$6,$7)`,
+      [req.params.id, qty, newQty, notes||'Added more inventory', ppq, spq, totalPurchase]);
+    return res.json({ message: 'Inventory added', new_quantity: newQty });
+  }
+  const product = mock.products.find(p => p.id === +req.params.id && !p.deleted_at);
+  if (!product) return res.status(404).json({ message: 'Product not found' });
+  product.current_quantity += qty;
+  product.purchase_price = ppq;
+  product.selling_price = spq;
+  product.updated_at = new Date();
+  mock.itx.push({ id:mock.nid.t++, product_id:product.id, transaction_type:'Inventory Added', quantity_in:qty, quantity_out:0, balance_after:product.current_quantity, reference_type:'add_inventory', notes:notes||'Added more inventory', purchase_price_per_qty:ppq, selling_price_per_qty:spq, total_amount:totalPurchase, created_at:new Date() });
+  res.json({ message: 'Inventory added', new_quantity: product.current_quantity });
+});
+
 router.put('/products/:id', async (req, res) => {
-  const { name, category, brand, purchase_price, selling_price, warranty_available, warranty_period, low_stock_quantity, notes } = req.body;
-  if (!USE_MOCK) { await q(`UPDATE products SET name=COALESCE($1,name),category=COALESCE($2,category),brand=COALESCE($3,brand),purchase_price=COALESCE($4,purchase_price),selling_price=COALESCE($5,selling_price),warranty_available=COALESCE($6,warranty_available),warranty_period=COALESCE($7,warranty_period),low_stock_quantity=COALESCE($8,low_stock_quantity),notes=COALESCE($9,notes),updated_at=NOW() WHERE id=$10`,
-    [name,category,brand,purchase_price?+purchase_price:null,selling_price?+selling_price:null,warranty_available!=null?!!warranty_available:null,warranty_period,low_stock_quantity?+low_stock_quantity:null,notes,req.params.id]); return res.json({ message:'Updated' }); }
+  const { name, category, brand, selling_price, warranty_available, warranty_period, low_stock_quantity, notes } = req.body;
+  if (warranty_available && !warranty_period) return res.status(400).json({ message: 'Warranty period required when warranty is available' });
+  if (!USE_MOCK) {
+    await q(`UPDATE products SET name=COALESCE($1,name),category=COALESCE($2,category),brand=COALESCE($3,brand),selling_price=COALESCE($4,selling_price),warranty_available=COALESCE($5,warranty_available),warranty_period=COALESCE($6,warranty_period),low_stock_quantity=COALESCE($7,low_stock_quantity),notes=COALESCE($8,notes),updated_at=NOW() WHERE id=$9`,
+      [name||null,category||null,brand||null,selling_price?+selling_price:null,warranty_available!=null?!!warranty_available:null,warranty_period||null,low_stock_quantity?+low_stock_quantity:null,notes!=null?notes:null,req.params.id]);
+    await q(`INSERT INTO inventory_transactions(product_id,transaction_type,quantity_in,quantity_out,balance_after,reference_type,notes) VALUES($1,'Product Edited',0,0,(SELECT current_quantity FROM products WHERE id=$1),'edit',$2)`, [req.params.id, 'Product details updated']);
+    return res.json({ message:'Updated' });
+  }
   const p = mock.products.find(x => x.id === +req.params.id && !x.deleted_at);
   if (!p) return res.status(404).json({ message: 'Not found' });
   if (name) p.name=name; if (category!==undefined) p.category=category; if (brand!==undefined) p.brand=brand;
-  if (purchase_price!==undefined) p.purchase_price=+purchase_price; if (selling_price!==undefined) p.selling_price=+selling_price;
+  if (selling_price!==undefined) p.selling_price=+selling_price;
   if (warranty_available!==undefined) p.warranty_available=!!warranty_available; if (warranty_period!==undefined) p.warranty_period=warranty_period;
   if (low_stock_quantity!==undefined) p.low_stock_quantity=+low_stock_quantity; if (notes!==undefined) p.notes=notes;
   p.updated_at=new Date();
+  mock.itx.push({ id:mock.nid.t++, product_id:p.id, transaction_type:'Product Edited', quantity_in:0, quantity_out:0, balance_after:p.current_quantity, reference_type:'edit', notes:'Product details updated', created_at:new Date() });
   res.json({ message:'Updated', product:p });
 });
 
@@ -152,6 +268,32 @@ router.delete('/products/:id', async (req, res) => {
 router.get('/products/:id/history', async (req, res) => {
   if (!USE_MOCK) { const r = await q('SELECT * FROM inventory_transactions WHERE product_id=$1 ORDER BY created_at DESC', [req.params.id]); return res.json(r.rows); }
   res.json(mock.itx.filter(t => t.product_id === +req.params.id).sort((a,b) => new Date(b.created_at)-new Date(a.created_at)));
+});
+
+router.post('/products/:id/stock-adjust', async (req, res) => {
+  const { adjustment_qty, reason } = req.body;
+  const adj = +adjustment_qty;
+  if (!adj || adj === 0) return res.status(400).json({ message: 'Adjustment quantity required (positive to add, negative to reduce)' });
+  if (!reason || !reason.trim()) return res.status(400).json({ message: 'Reason required for stock adjustment' });
+
+  if (!USE_MOCK) {
+    const pr = await q('SELECT current_quantity FROM products WHERE id=$1 AND deleted_at IS NULL', [req.params.id]);
+    if (!pr.rows.length) return res.status(404).json({ message: 'Product not found' });
+    const newQty = pr.rows[0].current_quantity + adj;
+    if (newQty < 0) return res.status(400).json({ message: 'Cannot reduce below 0. Current stock: ' + pr.rows[0].current_quantity });
+    await q('UPDATE products SET current_quantity=$1, updated_at=NOW() WHERE id=$2', [newQty, req.params.id]);
+    await q(`INSERT INTO inventory_transactions(product_id,transaction_type,quantity_in,quantity_out,balance_after,reference_type,notes) VALUES($1,'Stock Adjustment',$2,$3,$4,'adjustment',$5)`,
+      [req.params.id, adj > 0 ? adj : 0, adj < 0 ? Math.abs(adj) : 0, newQty, reason.trim()]);
+    return res.json({ message: 'Stock adjusted', new_quantity: newQty });
+  }
+  const product = mock.products.find(p => p.id === +req.params.id && !p.deleted_at);
+  if (!product) return res.status(404).json({ message: 'Product not found' });
+  const newQty = product.current_quantity + adj;
+  if (newQty < 0) return res.status(400).json({ message: 'Cannot reduce below 0. Current stock: ' + product.current_quantity });
+  product.current_quantity = newQty;
+  product.updated_at = new Date();
+  mock.itx.push({ id:mock.nid.t++, product_id:product.id, transaction_type:'Stock Adjustment', quantity_in: adj > 0 ? adj : 0, quantity_out: adj < 0 ? Math.abs(adj) : 0, balance_after:newQty, reference_type:'adjustment', notes:reason.trim(), created_at:new Date() });
+  res.json({ message: 'Stock adjusted', new_quantity: newQty });
 });
 
 

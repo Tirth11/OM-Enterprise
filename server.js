@@ -33,13 +33,13 @@ let mockDB = {
 // Initialize mock admin on startup
 (async () => {
   if (USE_MOCK_DB) {
-    const defaultAdminPassword = await bcryptjs.hash('Admin@123456', 10);
+    const defaultAdminPassword = await bcryptjs.hash('adarsh@123', 10);
     mockDB.admins = [
       {
         id: 1,
-        name: 'Self Weld Admin',
-        email: 'admin@selfweldindustries.com',
-        phone: '919876543210',
+        name: 'AUM Enterprise Admin',
+        email: 'admin@aumenterprise.com',
+        phone: '7038973721',
         password_hash: defaultAdminPassword,
         role: 'ADMIN',
         is_active: true,
@@ -49,8 +49,8 @@ let mockDB = {
       }
     ];
     console.log('✅ Mock database initialized with default admin');
-    console.log('📧 Email: admin@selfweldindustries.com');
-    console.log('🔐 Password: Admin@123456');
+    console.log('📱 Phone: 7038973721');
+    console.log('🔐 Password: adarsh@123');
   }
 })();
 
@@ -145,6 +145,37 @@ function generateOTP() {
   return Math.floor(Math.random() * 1000000)
     .toString()
     .padStart(OTP_LENGTH, '0');
+}
+
+// Send OTP via Fast2SMS (free tier - no DLT needed)
+async function sendOTP(phone, otp) {
+  const apiKey = process.env.FAST2SMS_API_KEY;
+  if (!apiKey) {
+    console.log('⚠️ FAST2SMS_API_KEY not set. OTP not sent via SMS.');
+    return false;
+  }
+  try {
+    const res = await fetch('https://www.fast2sms.com/dev/bulkV2', {
+      method: 'POST',
+      headers: { 'authorization': apiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        route: 'otp',
+        variables_values: otp,
+        numbers: phone,
+        flash: 0
+      })
+    });
+    const data = await res.json();
+    if (data.return) {
+      console.log(`✅ OTP sent to ${phone} via Fast2SMS`);
+      return true;
+    }
+    console.error('Fast2SMS error:', data.message);
+    return false;
+  } catch (err) {
+    console.error('SMS send failed:', err.message);
+    return false;
+  }
 }
 
 // Hash password
@@ -289,18 +320,20 @@ app.post('/api/auth/forgot-password', async (req, res) => {
   try {
     const { phone } = req.body;
 
-    if (!phone || phone.length !== 12) {
+    if (!phone || phone.length < 10) {
       return res.status(400).json({ message: 'Invalid phone number' });
     }
 
     // Check if admin exists
-    const admin = await pool.query(
-      'SELECT id FROM admins WHERE phone = $1 AND is_active = true',
-      [phone]
-    );
+    let adminRecord;
+    if (USE_MOCK_DB) {
+      adminRecord = mockDB.admins.find(a => a.phone === phone && a.is_active);
+    } else {
+      const admin = await pool.query('SELECT id FROM admins WHERE phone = $1 AND is_active = true', [phone]);
+      adminRecord = admin.rows[0];
+    }
 
-    if (!admin.rows[0]) {
-      // Don't reveal if phone exists for security
+    if (!adminRecord) {
       return res.status(200).json({ message: 'If phone exists, OTP will be sent' });
     }
 
@@ -310,15 +343,17 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     const expiresAt = new Date(Date.now() + OTP_EXPIRE_MINUTES * 60 * 1000);
 
     // Save OTP
-    await pool.query(
-      'INSERT INTO otp_codes (phone, otp_hash, purpose, expires_at) VALUES ($1, $2, $3, $4)',
-      [phone, otpHash, 'ADMIN_FORGOT_PASSWORD', expiresAt]
-    );
+    if (USE_MOCK_DB) {
+      mockDB.otp_codes.push({ id: Date.now(), phone, otp_hash: otpHash, expires_at: expiresAt, attempt_count: 0, is_used: false });
+    } else {
+      await pool.query('INSERT INTO otp_codes (phone, otp_hash, purpose, expires_at) VALUES ($1, $2, $3, $4)', [phone, otpHash, 'ADMIN_FORGOT_PASSWORD', expiresAt]);
+    }
 
-    // TODO: Send OTP via SMS (Twilio, AWS SNS, etc.)
-    console.log(`OTP for ${phone}: ${otp}`); // Remove in production
+    // Send OTP via Fast2SMS
+    const sent = await sendOTP(phone, otp);
+    console.log(`OTP for ${phone}: ${otp}`); // Backup log
 
-    res.json({ message: 'OTP sent to your phone' });
+    res.json({ message: sent ? 'OTP sent to your phone' : 'OTP generated (check console)' });
   } catch (err) {
     console.error('Forgot password error:', err);
     res.status(500).json({ message: 'Server error' });
@@ -329,53 +364,32 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 app.post('/api/auth/verify-otp', async (req, res) => {
   try {
     const { phone, otp } = req.body;
+    if (!phone || !otp) return res.status(400).json({ message: 'Phone and OTP required' });
 
-    if (!phone || !otp) {
-      return res.status(400).json({ message: 'Phone and OTP required' });
+    let record;
+    if (USE_MOCK_DB) {
+      record = mockDB.otp_codes.filter(o => o.phone === phone && !o.is_used && new Date(o.expires_at) > new Date())
+        .sort((a,b) => b.id - a.id)[0];
+    } else {
+      const otpRecord = await pool.query(
+        `SELECT * FROM otp_codes WHERE phone = $1 AND is_used = false AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1`, [phone]);
+      record = otpRecord.rows[0];
     }
 
-    // Find latest OTP
-    const otpRecord = await pool.query(
-      `SELECT * FROM otp_codes 
-       WHERE phone = $1 AND is_used = false AND expires_at > NOW()
-       ORDER BY created_at DESC LIMIT 1`,
-      [phone]
-    );
+    if (!record) return res.status(401).json({ message: 'Invalid or expired OTP' });
+    if (record.attempt_count >= MAX_OTP_ATTEMPTS) return res.status(429).json({ message: 'Too many attempts. Request new OTP.' });
 
-    if (!otpRecord.rows[0]) {
-      return res.status(401).json({ message: 'Invalid or expired OTP' });
-    }
-
-    const record = otpRecord.rows[0];
-
-    // Check attempts
-    if (record.attempt_count >= MAX_OTP_ATTEMPTS) {
-      return res.status(429).json({ message: 'Too many attempts. Request new OTP.' });
-    }
-
-    // Verify OTP
     const isValid = await verifyPassword(otp, record.otp_hash);
     if (!isValid) {
-      await pool.query(
-        'UPDATE otp_codes SET attempt_count = attempt_count + 1 WHERE id = $1',
-        [record.id]
-      );
+      if (USE_MOCK_DB) { record.attempt_count++; }
+      else { await pool.query('UPDATE otp_codes SET attempt_count = attempt_count + 1 WHERE id = $1', [record.id]); }
       return res.status(401).json({ message: 'Invalid OTP' });
     }
 
-    // Mark OTP as used
-    await pool.query(
-      'UPDATE otp_codes SET is_used = true WHERE id = $1',
-      [record.id]
-    );
+    if (USE_MOCK_DB) { record.is_used = true; }
+    else { await pool.query('UPDATE otp_codes SET is_used = true WHERE id = $1', [record.id]); }
 
-    // Generate reset token
-    const resetToken = jwt.sign(
-      { phone, purpose: 'PASSWORD_RESET' },
-      JWT_SECRET,
-      { expiresIn: '15m' }
-    );
-
+    const resetToken = jwt.sign({ phone, purpose: 'PASSWORD_RESET' }, JWT_SECRET, { expiresIn: '15m' });
     res.json({ message: 'OTP verified', token: resetToken });
   } catch (err) {
     console.error('Verify OTP error:', err);
@@ -387,33 +401,30 @@ app.post('/api/auth/verify-otp', async (req, res) => {
 app.post('/api/auth/resend-otp', async (req, res) => {
   try {
     const { phone } = req.body;
+    if (!phone) return res.status(400).json({ message: 'Phone required' });
 
-    if (!phone) {
-      return res.status(400).json({ message: 'Phone required' });
+    let adminRecord;
+    if (USE_MOCK_DB) {
+      adminRecord = mockDB.admins.find(a => a.phone === phone && a.is_active);
+    } else {
+      const admin = await pool.query('SELECT id FROM admins WHERE phone = $1 AND is_active = true', [phone]);
+      adminRecord = admin.rows[0];
     }
 
-    // Check if admin exists
-    const admin = await pool.query(
-      'SELECT id FROM admins WHERE phone = $1 AND is_active = true',
-      [phone]
-    );
+    if (!adminRecord) return res.status(200).json({ message: 'If phone exists, OTP will be sent' });
 
-    if (!admin.rows[0]) {
-      return res.status(200).json({ message: 'If phone exists, OTP will be sent' });
-    }
-
-    // Generate new OTP
     const otp = generateOTP();
     const otpHash = await hashPassword(otp);
     const expiresAt = new Date(Date.now() + OTP_EXPIRE_MINUTES * 60 * 1000);
 
-    // Save OTP
-    await pool.query(
-      'INSERT INTO otp_codes (phone, otp_hash, purpose, expires_at) VALUES ($1, $2, $3, $4)',
-      [phone, otpHash, 'ADMIN_FORGOT_PASSWORD', expiresAt]
-    );
+    if (USE_MOCK_DB) {
+      mockDB.otp_codes.push({ id: Date.now(), phone, otp_hash: otpHash, expires_at: expiresAt, attempt_count: 0, is_used: false });
+    } else {
+      await pool.query('INSERT INTO otp_codes (phone, otp_hash, purpose, expires_at) VALUES ($1, $2, $3, $4)', [phone, otpHash, 'ADMIN_FORGOT_PASSWORD', expiresAt]);
+    }
 
-    console.log(`OTP for ${phone}: ${otp}`); // Remove in production
+    await sendOTP(phone, otp);
+    console.log(`OTP for ${phone}: ${otp}`);
 
     res.json({ message: 'OTP resent' });
   } catch (err) {

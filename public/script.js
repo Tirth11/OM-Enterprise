@@ -1,10 +1,10 @@
-// Enhanced Self Weld Industries JavaScript
+// Enhanced AUM Enterprise JavaScript
 // Handles navigation, forms, animations, and WhatsApp integration
 
 class SelfWeldApp {
   constructor() {
     this.whatsappNumber = '919876543210';
-    this.businessName = 'Self Weld Industries';
+    this.businessName = 'AUM Enterprise';
     this.init();
   }
 

@@ -3,179 +3,106 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verify OTP | Self Weld Industries</title>
+  <title>Verify OTP | AUM Enterprise</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="../auth.css">
 </head>
 <body>
   <div class="auth-container">
     <div class="auth-wrapper">
       <div class="auth-header">
-        <a href="../index.html" class="logo-link">Self Weld Industries</a>
-        <p class="subtitle">OTP Verification</p>
+        <a href="../index.html" class="logo-link"><i class="fas fa-tools"></i> AUM Enterprise</a>
+        <p class="subtitle">Verify Your Identity</p>
+      </div>
+
+      <div class="step-indicator">
+        <span class="step done"><i class="fas fa-check" style="font-size:0.65rem"></i></span>
+        <span class="step-line active"></span>
+        <span class="step active">2</span>
+        <span class="step-line"></span>
+        <span class="step">3</span>
       </div>
 
       <form class="auth-form" id="otpForm">
-        <h1>Enter OTP</h1>
-        <p class="form-desc" id="phoneDisplay">OTP sent to your registered phone</p>
+        <h1>Enter Verification Code</h1>
+        <p class="form-desc">We've sent a 6-digit code to your registered phone number. Enter it below to continue.</p>
 
         <div class="form-group">
-          <label for="otp">One-Time Password (OTP)</label>
-          <input
-            type="text"
-            id="otp"
-            name="otp"
-            placeholder="Enter 6-digit OTP"
-            required
-            inputmode="numeric"
-            pattern="[0-9]{6}"
-            maxlength="6"
-          />
-          <small class="hint">6-digit code sent to your phone</small>
+          <label for="otp"><i class="fas fa-shield-alt"></i> OTP Code</label>
+          <input type="text" id="otp" placeholder="● ● ● ● ● ●" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" style="text-align:center;font-size:1.4rem;letter-spacing:0.6rem;font-weight:700">
         </div>
 
-        <button type="submit" class="btn btn-primary btn-full">
-          <span>Verify OTP</span>
-          <span class="spinner" id="spinner" style="display: none;">⏳</span>
+        <button type="submit" class="btn btn-primary btn-full" id="verifyBtn">
+          <span>Verify Code</span>
+          <span class="spinner" id="spinner" style="display:none"><i class="fas fa-circle-notch fa-spin"></i></span>
         </button>
 
-        <div class="alert alert-error" id="errorMsg" style="display: none;"></div>
+        <div class="alert alert-error" id="errorMsg" style="display:none"></div>
+
+        <div class="otp-info">
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.4rem">Didn't receive the code?</p>
+          <button type="button" class="link-secondary" id="resendBtn" style="border:none;background:none;cursor:pointer;font-size:0.85rem;padding:0"><i class="fas fa-redo"></i> Resend Code</button>
+        </div>
       </form>
 
-      <div class="otp-info">
-        <p class="text-muted" id="timerDisplay">OTP expires in 5:00</p>
-        <button type="button" class="link-secondary" id="resendBtn">Resend OTP</button>
-        <span class="text-muted" id="resendCooldown" style="display: none;"></span>
-      </div>
-
       <div class="auth-footer">
-        <a href="forgot-password.html" class="link-secondary">← Back</a>
-        <p class="text-muted">Secure verification</p>
+        <a href="forgot-password.html" class="link-secondary"><i class="fas fa-arrow-left"></i> Change Phone Number</a>
       </div>
     </div>
   </div>
 
   <script>
+    const phone = new URLSearchParams(window.location.search).get('phone') || sessionStorage.getItem('resetPhone');
+    if (!phone) window.location.href = 'forgot-password.html';
+
     const form = document.getElementById('otpForm');
     const errorMsg = document.getElementById('errorMsg');
     const spinner = document.getElementById('spinner');
-    const otpInput = document.getElementById('otp');
+    const verifyBtn = document.getElementById('verifyBtn');
     const resendBtn = document.getElementById('resendBtn');
-    const resendCooldown = document.getElementById('resendCooldown');
-    const timerDisplay = document.getElementById('timerDisplay');
-
-    // Get phone from URL or session
-    const urlParams = new URLSearchParams(window.location.search);
-    const phone = urlParams.get('phone') || sessionStorage.getItem('resetPhone');
-
-    if (phone) {
-      document.getElementById('phoneDisplay').textContent = `OTP sent to ${phone.slice(-4).padStart(12, '*')}`;
-    }
-
-    // Only accept numeric input
-    otpInput.addEventListener('keypress', (e) => {
-      if (!/[0-9]/.test(e.key)) e.preventDefault();
-    });
-
-    // Timer
-    let timeLeft = 300; // 5 minutes
-    const timer = setInterval(() => {
-      timeLeft--;
-      const mins = Math.floor(timeLeft / 60);
-      const secs = timeLeft % 60;
-      timerDisplay.textContent = `OTP expires in ${mins}:${secs.toString().padStart(2, '0')}`;
-
-      if (timeLeft <= 0) {
-        clearInterval(timer);
-        timerDisplay.textContent = 'OTP expired. Request a new one.';
-        form.style.display = 'none';
-      }
-    }, 1000);
-
-    resendBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      if (!phone) return;
-
-      resendBtn.disabled = true;
-      errorMsg.style.display = 'none';
-
-      try {
-        const res = await fetch('/api/auth/resend-otp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone })
-        });
-
-        if (!res.ok) throw new Error('Failed to resend OTP');
-
-        // Reset timer
-        clearInterval(timer);
-        timeLeft = 300;
-        timerDisplay.style.display = 'block';
-        resendCooldown.style.display = 'none';
-
-        // Cooldown
-        let cooldown = 60;
-        resendCooldown.textContent = `Resend in ${cooldown}s`;
-        resendCooldown.style.display = 'inline';
-        const cooldownTimer = setInterval(() => {
-          cooldown--;
-          resendCooldown.textContent = `Resend in ${cooldown}s`;
-          if (cooldown <= 0) {
-            clearInterval(cooldownTimer);
-            resendCooldown.style.display = 'none';
-            resendBtn.disabled = false;
-          }
-        }, 1000);
-      } catch (err) {
-        resendBtn.disabled = false;
-        errorMsg.textContent = 'Failed to resend OTP. Try again.';
-        errorMsg.style.display = 'block';
-      }
-    });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       errorMsg.style.display = 'none';
       spinner.style.display = 'inline';
+      verifyBtn.disabled = true;
 
-      const otp = otpInput.value.trim();
-
-      if (!otp || otp.length !== 6) {
-        showError('Please enter a valid 6-digit OTP');
-        spinner.style.display = 'none';
-        return;
-      }
+      const otp = document.getElementById('otp').value.trim();
+      if (!otp || otp.length !== 6) { showError('Please enter the complete 6-digit code'); return; }
 
       try {
-        const res = await fetch('/api/auth/verify-otp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone, otp })
-        });
-
-        spinner.style.display = 'none';
+        const res = await fetch('/api/auth/verify-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone, otp }) });
         const data = await res.json();
 
-        if (!res.ok) {
-          showError(data.message || 'Invalid OTP');
-          return;
-        }
+        if (!res.ok) { showError(data.message || 'Invalid code. Please check and try again.'); return; }
 
         sessionStorage.setItem('resetToken', data.token);
-        sessionStorage.setItem('resetPhone', phone);
         window.location.href = 'reset-password.html';
-      } catch (err) {
-        spinner.style.display = 'none';
-        showError('Connection error. Please try again.');
+      } catch (err) { showError('Unable to connect. Please try again.'); }
+    });
+
+    resendBtn.addEventListener('click', async () => {
+      resendBtn.disabled = true;
+      resendBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Sending...';
+      try {
+        await fetch('/api/auth/resend-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone }) });
+        resendBtn.innerHTML = '<i class="fas fa-check"></i> Code Sent!';
+        setTimeout(() => { resendBtn.innerHTML = '<i class="fas fa-redo"></i> Resend Code'; resendBtn.disabled = false; }, 30000);
+      } catch(e) {
+        resendBtn.innerHTML = '<i class="fas fa-redo"></i> Resend Code';
+        resendBtn.disabled = false;
+        showError('Failed to resend. Please try again.');
       }
     });
 
     function showError(msg) {
       errorMsg.textContent = msg;
       errorMsg.style.display = 'block';
+      spinner.style.display = 'none';
+      verifyBtn.disabled = false;
     }
   </script>
 </body>

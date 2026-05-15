@@ -1,4 +1,24 @@
--- Self Weld Industries - Customer & Inventory Module Schema
+-- AUM Enterprise - Customer & Inventory Module Schema
+
+CREATE TABLE IF NOT EXISTS category_master (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS brand_master (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  deleted_at TIMESTAMP
+);
+
+-- Seed default categories
+INSERT INTO category_master(name) VALUES ('Welding Machine'),('Power Tools'),('Welding Rods'),('Welding Cables'),('Accessories') ON CONFLICT DO NOTHING;
+
+-- Seed default brands
+INSERT INTO brand_master(name) VALUES ('Esab'),('Ador'),('D&H Secheron'),('Bosch'),('Makita'),('Stanley') ON CONFLICT DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS customers (
   id SERIAL PRIMARY KEY,
@@ -31,15 +51,19 @@ CREATE TABLE IF NOT EXISTS customer_product_history (
   customer_id INT REFERENCES customers(id),
   product_id INT REFERENCES products(id),
   quantity INT NOT NULL DEFAULT 1,
-  purchased_on DATE NOT NULL,
+  purchased_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   warranty_available BOOLEAN DEFAULT false,
   warranty_start_date DATE,
   warranty_end_date DATE,
   warranty_extended BOOLEAN DEFAULT false,
   extended_warranty_end_date DATE,
   warranty_extension_reason TEXT,
-  payment_status VARCHAR(20) DEFAULT 'Pending',
+  selling_price_per_qty DECIMAL(10,2) DEFAULT 0,
+  total_amount DECIMAL(10,2) DEFAULT 0,
   amount_paid DECIMAL(10,2) DEFAULT 0,
+  balance_amount DECIMAL(10,2) DEFAULT 0,
+  paid_via VARCHAR(30) DEFAULT '',
+  payment_status VARCHAR(20) DEFAULT 'Pending',
   notes TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -88,6 +112,9 @@ CREATE TABLE IF NOT EXISTS inventory_transactions (
   quantity_in INT DEFAULT 0,
   quantity_out INT DEFAULT 0,
   balance_after INT DEFAULT 0,
+  purchase_price_per_qty DECIMAL(10,2),
+  selling_price_per_qty DECIMAL(10,2),
+  total_amount DECIMAL(10,2),
   reference_type VARCHAR(50),
   reference_id INT,
   notes TEXT,
