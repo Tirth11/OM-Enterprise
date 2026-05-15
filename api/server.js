@@ -11,7 +11,10 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL?.includes('neon.tech') ? { rejectUnauthorized: false } : false
+});
 
 const JWT_SECRET = process.env.JWT_SECRET || 'selfweld-secret-key-2026';
 const OTP_EXPIRE_MINUTES = 5;
@@ -117,7 +120,14 @@ app.post('/api/auth/reset-password', async (req, res) => {
 });
 
 // HEALTH CHECK
-app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
+app.get('/api/health', async (req, res) => {
+  try {
+    const r = await pool.query('SELECT NOW() as time, current_database() as db');
+    res.json({ status: 'ok', db: r.rows[0].db, time: r.rows[0].time, env_set: !!process.env.DATABASE_URL });
+  } catch(e) {
+    res.json({ status: 'db_error', error: e.message, env_set: !!process.env.DATABASE_URL, url_preview: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 30) + '...' : 'NOT SET' });
+  }
+});
 
 // MODULE ROUTES
 const path = require('path');
