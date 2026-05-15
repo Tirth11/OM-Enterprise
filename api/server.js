@@ -116,8 +116,12 @@ app.post('/api/auth/reset-password', async (req, res) => {
   } catch(e) { res.status(500).json({ message: 'Server error' }); }
 });
 
+// HEALTH CHECK
+app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
+
 // MODULE ROUTES
-const moduleRoutes = require('../routes-modules');
+const path = require('path');
+const moduleRoutes = require(path.join(__dirname, '..', 'routes-modules'));
 moduleRoutes.setPool(pool, false);
 app.use('/api', moduleRoutes);
 
