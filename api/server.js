@@ -11,9 +11,11 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Clean DATABASE_URL (remove sslmode param, trim whitespace/newlines)
+const dbUrl = (process.env.DATABASE_URL || '').replace(/[\r\n]/g, '').replace(/[?&]sslmode=[^&]*/g, '').trim();
 const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('neon.tech') ? { rejectUnauthorized: false } : false
+  connectionString: dbUrl,
+  ssl: { rejectUnauthorized: false }
 });
 
 const JWT_SECRET = process.env.JWT_SECRET || 'selfweld-secret-key-2026';
