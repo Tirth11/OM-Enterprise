@@ -11,8 +11,8 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Clean DATABASE_URL (remove sslmode param, trim whitespace/newlines)
-const dbUrl = (process.env.DATABASE_URL || '').replace(/[\r\n]/g, '').replace(/[?&]sslmode=[^&]*/g, '').trim();
+// Clean DATABASE_URL (remove any whitespace/newlines that may have been introduced during env var paste)
+const dbUrl = (process.env.DATABASE_URL || '').replace(/\s+/g, '').replace(/[?&]sslmode=[^&]*/g, '');
 const pool = new Pool({ 
   connectionString: dbUrl,
   ssl: { rejectUnauthorized: false }
