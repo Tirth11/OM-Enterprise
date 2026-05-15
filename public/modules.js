@@ -68,7 +68,8 @@ async function openAddCustomerModal() {
   document.getElementById('customerFormId').value = '';
   document.getElementById('productDetailsPanel').style.display = 'none';
   document.getElementById('custTotalAmount').value = '';
-  document.getElementById('custBalance').value = '';
+  const balanceInput = document.getElementById('custBalance');
+  if (balanceInput) balanceInput.value = '';
   document.getElementById('custPurchaseDate').value = new Date().toISOString().slice(0,16);
   await loadProductDropdown();
   showModal('customerModal');
@@ -120,7 +121,10 @@ function calcCustomerBalance() {
   const total = sp * qty;
   const paid = +document.getElementById('custAmountPaid').value || 0;
   const balance = total - paid;
-  document.getElementById('custBalance').value = balance >= 0 ? '₹' + balance.toLocaleString('en-IN') : '';
+  const balanceInput = document.getElementById('custBalance');
+  if (balanceInput) {
+    balanceInput.value = balance >= 0 ? '₹' + balance.toLocaleString('en-IN') : '';
+  }
 }
 
 async function saveCustomer() {
