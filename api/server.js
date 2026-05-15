@@ -46,7 +46,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
     await pool.query('UPDATE admins SET last_login_at=NOW() WHERE id=$1', [r.rows[0].id]);
     res.json({ message: 'Login successful', token: generateToken(r.rows[0]), admin: { id: r.rows[0].id, name: r.rows[0].name, email: r.rows[0].email, phone: r.rows[0].phone } });
-  } catch(e) { res.status(500).json({ message: 'Server error' }); }
+  } catch(e) { console.error('Login error:', e.message); res.status(500).json({ message: 'Server error', detail: e.message }); }
 });
 
 // VERIFY TOKEN
