@@ -150,7 +150,7 @@
             </div>
             <div class="module-table-wrap">
               <table class="module-table"><thead><tr>
-                <th>Name</th><th>Phone</th><th>Product</th><th>Qty</th><th>Total ₹</th><th>Paid ₹</th><th>Warranty</th><th>Purchased</th><th>Created</th><th>Modified</th><th>Actions</th>
+                <th>Name</th><th>Phone</th><th>Entry Type</th><th>Product</th><th>Qty</th><th>Total ₹</th><th>Paid ₹</th><th>Balance ₹</th><th>Payment</th><th>Issue Status</th><th>Date</th><th>Created</th><th>Modified</th><th>Actions</th>
               </tr></thead><tbody id="customersTableBody"></tbody></table>
             </div>
             <div class="mobile-cards" id="customersCards"></div>
@@ -208,7 +208,7 @@
           </div>
           <div class="module-table-wrap">
             <table class="module-table"><thead><tr>
-              <th>Customer</th><th>Product</th><th>Date</th><th>Issue</th><th>Status</th><th>Warranty</th><th>Charges</th><th>Actions</th>
+              <th>Customer</th><th>Product</th><th>Date</th><th>Issue</th><th>Status</th><th>Warranty</th><th>Charges</th><th>Paid</th><th>Balance</th><th>Actions</th>
             </tr></thead><tbody id="issuesTableBody"></tbody></table>
           </div>
           <div class="mobile-cards" id="issuesCards"></div>
@@ -223,44 +223,138 @@
 
   <!-- Customer Modal -->
   <div class="modal-overlay" id="customerModal">
-    <div class="modal-box">
+    <div class="modal-box" style="max-width:680px">
       <h2 id="customerFormTitle">Add Customer Record</h2>
       <form id="customerForm" onsubmit="event.preventDefault();saveCustomer()">
         <input type="hidden" id="customerFormId" value="">
-        <div class="form-row">
-          <div class="form-group"><label>Customer Name *</label><input type="text" id="custName" required></div>
-          <div class="form-group"><label>Phone Number</label><input type="text" id="custPhone" maxlength="15"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group" style="grid-column:1/-1"><label>Product *</label><select id="customerProductSelect" onchange="onProductSelected()" required><option value="">-- Select Product --</option></select></div>
-        </div>
-        <div id="productDetailsPanel" style="display:none;background:var(--bg-tertiary);padding:0.75rem;border-radius:8px;margin-bottom:0.875rem;border:1px solid var(--border)">
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;font-size:0.8rem">
-            <div><strong>Category:</strong> <span id="custProdCategory">-</span></div>
-            <div><strong>Brand:</strong> <span id="custProdBrand">-</span></div>
-            <div><strong>Stock:</strong> <span id="custProdStock">-</span></div>
-            <div><strong>Price:</strong> <span id="custProdPrice">-</span></div>
-            <div><strong>Warranty:</strong> <span id="custProdWarranty">-</span></div>
+        <input type="hidden" id="customerEntryType" value="">
+
+        <!-- Entry Type Selection -->
+        <div id="entryTypeSelection" class="entry-type-selection">
+          <p style="margin-bottom:0.75rem;font-weight:500;color:var(--text-secondary)">Select Entry Type:</p>
+          <div class="entry-type-cards">
+            <div class="entry-type-card" onclick="selectEntryType('purchase')">
+              <i class="fas fa-shopping-cart"></i>
+              <h4>Product Purchase</h4>
+              <p>Customer bought product from our inventory</p>
+            </div>
+            <div class="entry-type-card" onclick="selectEntryType('maintenance')">
+              <i class="fas fa-wrench"></i>
+              <h4>Maintenance Only</h4>
+              <p>Customer came for repair/issue only</p>
+            </div>
           </div>
+          <div style="text-align:center;margin-top:1rem"><button type="button" class="btn-cancel" onclick="hideModal('customerModal')" style="padding:0.6rem 1.5rem">Cancel</button></div>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label>Quantity *</label><input type="number" id="custQuantity" min="1" required oninput="calcCustomerTotal()"></div>
-          <div class="form-group"><label>Selling Price / Qty (₹)</label><input type="number" id="custSellingPrice" step="0.01" oninput="calcCustomerTotal()"></div>
+
+        <!-- Common Fields -->
+        <div id="customerFormFields" style="display:none">
+          <div class="form-row">
+            <div class="form-group"><label>Customer Name *</label><input type="text" id="custName" required></div>
+            <div class="form-group"><label>Phone Number *</label><input type="text" id="custPhone" maxlength="10" placeholder="10 digits" required></div>
+          </div>
+
+          <!-- PRODUCT PURCHASE FIELDS -->
+          <div id="purchaseFields" style="display:none">
+            <div class="form-row">
+              <div class="form-group"><label>Product Category *</label><select id="custProdCategorySelect" onchange="onCategorySelected()"><option value="">-- Select Category --</option></select></div>
+              <div class="form-group"><label>Product *</label><select id="customerProductSelect" onchange="onProductSelected()" required><option value="">-- Select Product --</option></select></div>
+            </div>
+            <div id="productDetailsPanel" style="display:none;background:var(--bg-tertiary);padding:0.75rem;border-radius:8px;margin-bottom:0.875rem;border:1px solid var(--border)">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;font-size:0.8rem">
+                <div><strong>Category:</strong> <span id="custProdCategory">-</span></div>
+                <div><strong>Brand:</strong> <span id="custProdBrand">-</span></div>
+                <div><strong>Stock:</strong> <span id="custProdStock">-</span></div>
+                <div><strong>Price:</strong> <span id="custProdPrice">-</span></div>
+                <div><strong>Warranty:</strong> <span id="custProdWarranty">-</span></div>
+                <div><strong>Warranty Period:</strong> <span id="custProdWarrantyPeriod">-</span></div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Quantity *</label><input type="number" id="custQuantity" min="1" required oninput="calcCustomerTotal()"></div>
+              <div class="form-group"><label>Selling Price / Qty (₹)</label><input type="number" id="custSellingPrice" step="0.01" oninput="calcCustomerTotal()"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Total Amount (₹)</label><input type="text" id="custTotalAmount" readonly style="background:var(--bg-tertiary);font-weight:600"></div>
+              <div class="form-group"><label>Balance Due (₹)</label><input type="text" id="custBalance" readonly style="background:var(--bg-tertiary);font-weight:600;color:var(--danger)"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Amount Paid (₹)</label><input type="number" id="custAmountPaid" step="0.01" min="0" value="0" oninput="calcCustomerBalance()"></div>
+              <div class="form-group"><label>Paid Via</label><select id="custPaidVia"><option value="">-- Select --</option><option>Cash</option><option>UPI</option><option>PhonePe</option><option>Google Pay</option><option>Paytm</option><option>Card</option><option>Bank Transfer</option><option>Other</option></select></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Purchase Date & Time</label><input type="datetime-local" id="custPurchaseDate"></div>
+              <div class="form-group"><label>Warranty End Date</label><input type="date" id="custWarrantyEnd" readonly style="background:var(--bg-tertiary)"></div>
+            </div>
+            <div class="form-group"><label>Notes</label><textarea id="custNotes" rows="2"></textarea></div>
+          </div>
+
+          <!-- MAINTENANCE ONLY FIELDS -->
+          <div id="maintenanceFields" style="display:none">
+            <div class="form-row">
+              <div class="form-group"><label>Category *</label><select id="maintCategory" onchange="toggleMaintNewCategory()"><option value="">-- Select --</option></select><input type="text" id="maintNewCategory" placeholder="Enter new category" style="display:none;margin-top:0.4rem"></div>
+              <div class="form-group"><label>Product Name *</label><select id="maintProductSelect" onchange="toggleMaintNewProduct()"><option value="">-- Select --</option></select><input type="text" id="maintNewProduct" placeholder="Enter product name" style="display:none;margin-top:0.4rem"></div>
+            </div>
+            <div class="form-group"><label>Issue Description *</label><textarea id="maintIssueDesc" rows="3" required placeholder="Describe the issue in detail..."></textarea></div>
+            <div class="form-row">
+              <div class="form-group"><label>Issue Date & Time</label><input type="datetime-local" id="maintIssueDate"></div>
+              <div class="form-group"><label>Issue Status</label><select id="maintIssueStatus" onchange="toggleMaintFixFields()"><option>Reported</option><option>Checking</option><option>Repair In Progress</option><option>Fixed</option></select></div>
+            </div>
+            <div id="maintFixFields" style="display:none">
+              <div class="form-row">
+                <div class="form-group"><label>Fixed Date & Time *</label><input type="datetime-local" id="maintFixedDate"></div>
+                <div class="form-group"><label>Fix Done Details *</label><textarea id="maintFixDetails" rows="2"></textarea></div>
+              </div>
+            </div>
+            <div class="form-group"><label>Notes</label><textarea id="maintNotes" rows="2"></textarea></div>
+            <hr style="margin:1rem 0;border-color:var(--border)">
+            <div class="form-group">
+              <label class="checkbox-label"><input type="checkbox" id="maintChargesApplicable" onchange="toggleMaintCharges()"><span class="checkmark"></span> Charges Applicable</label>
+            </div>
+            <div id="maintChargesSection" style="display:none">
+              <div id="maintChargeRows"></div>
+              <button type="button" class="btn-sm btn-primary" onclick="addMaintChargeRow()" style="margin-bottom:0.75rem"><i class="fas fa-plus"></i> Add Charge Row</button>
+              <div class="form-row">
+                <div class="form-group"><label>Total Charges (₹)</label><input type="text" id="maintTotalCharges" readonly style="background:var(--bg-tertiary);font-weight:600"></div>
+                <div class="form-group"><label>Balance Due (₹)</label><input type="text" id="maintBalanceDue" readonly style="background:var(--bg-tertiary);font-weight:600;color:var(--danger)"></input></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Amount Paid (₹)</label><input type="number" id="maintAmountPaid" step="0.01" min="0" value="0" oninput="calcMaintBalance()"></div>
+                <div class="form-group"><label>Paid Via</label><select id="maintPaidVia"><option value="">-- Select --</option><option>Cash</option><option>UPI</option><option>PhonePe</option><option>Google Pay</option><option>Paytm</option><option>Card</option><option>Bank Transfer</option><option>Other</option></select></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-actions"><button type="button" class="btn-cancel" onclick="hideModal('customerModal')">Cancel</button><button type="button" class="btn-cancel" onclick="resetEntryType()">← Back</button><button type="submit" class="btn-save">Save</button></div>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label>Total Amount (₹)</label><input type="text" id="custTotalAmount" readonly style="background:var(--bg-tertiary);font-weight:600"></div>
-          <div class="form-group"><label>Amount Paid (₹) *</label><input type="number" id="custAmountPaid" step="0.01" min="0" required></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Paid Via</label><select id="custPaidVia"><option value="">--</option><option>Cash</option><option>UPI</option><option>PhonePe</option><option>Google Pay</option><option>Paytm</option><option>Card</option><option>Bank Transfer</option><option>Other</option></select></div>
-          <div class="form-group"><label>Purchase Date & Time</label><input type="datetime-local" id="custPurchaseDate"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Warranty End Date</label><input type="date" id="custWarrantyEnd" readonly style="background:var(--bg-tertiary)"></div>
-          <div class="form-group"></div>
-        </div>
-        <div class="form-group"><label>Notes</label><textarea id="custNotes" rows="2"></textarea></div>
-        <div class="modal-actions"><button type="button" class="btn-cancel" onclick="hideModal('customerModal')">Cancel</button><button type="submit" class="btn-save">Save Customer</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Update Payment Modal -->
+  <div class="modal-overlay" id="paymentModal">
+    <div class="modal-box" style="max-width:400px">
+      <h2>Update Payment</h2>
+      <form id="paymentForm" onsubmit="event.preventDefault();savePaymentUpdate()">
+        <input type="hidden" id="payRefId" value="">
+        <input type="hidden" id="payRefType" value="">
+        <div class="form-group"><label>Current Balance Due</label><input type="text" id="payCurrentBalance" readonly style="background:var(--bg-tertiary);font-weight:600"></div>
+        <div class="form-group"><label>Amount Paying Now (₹) *</label><input type="number" id="payAmount" step="0.01" min="0.01" required></div>
+        <div class="form-group"><label>Paid Via *</label><select id="payPaidVia" required><option value="">-- Select --</option><option>Cash</option><option>UPI</option><option>PhonePe</option><option>Google Pay</option><option>Paytm</option><option>Card</option><option>Bank Transfer</option><option>Other</option></select></div>
+        <div class="modal-actions"><button type="button" class="btn-cancel" onclick="hideModal('paymentModal')">Cancel</button><button type="submit" class="btn-save">Update Payment</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Mark Fixed Modal -->
+  <div class="modal-overlay" id="markFixedModal">
+    <div class="modal-box" style="max-width:450px">
+      <h2>Mark Issue as Fixed</h2>
+      <form id="markFixedForm" onsubmit="event.preventDefault();saveMarkFixed()">
+        <input type="hidden" id="fixMaintId" value="">
+        <div class="form-group"><label>Fixed Date & Time *</label><input type="datetime-local" id="fixMaintDate" required></div>
+        <div class="form-group"><label>Fix Done Details *</label><textarea id="fixMaintDetails" required rows="3" placeholder="What was repaired/replaced..."></textarea></div>
+        <div class="modal-actions"><button type="button" class="btn-cancel" onclick="hideModal('markFixedModal')">Cancel</button><button type="submit" class="btn-save">Mark Fixed</button></div>
       </form>
     </div>
   </div>
@@ -433,10 +527,10 @@
 
   <!-- Confirm Modal -->
   <div class="modal-overlay" id="confirmModal">
-    <div class="modal-box" style="max-width:380px;text-align:center">
-      <i class="fas fa-exclamation-triangle" style="font-size:2rem;color:var(--warning);margin-bottom:0.75rem;display:block"></i>
+    <div class="modal-box" style="max-width:480px;text-align:center">
+      <i class="fas fa-exclamation-triangle" style="font-size:2rem;color:var(--warning);margin-bottom:0.75rem;display:block" id="confirmIcon"></i>
       <h2 style="font-size:1.1rem;margin-bottom:0.4rem" id="confirmTitle">Are you sure?</h2>
-      <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:1rem" id="confirmMsg"></p>
+      <div style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:1rem" id="confirmMsg"></div>
       <div class="modal-actions" style="justify-content:center">
         <button class="btn-cancel" onclick="hideModal('confirmModal')">Cancel</button>
         <button class="btn-save" style="background:var(--danger)" id="confirmYesBtn">Yes, Delete</button>

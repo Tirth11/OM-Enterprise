@@ -66,21 +66,60 @@ async function openAddCustomerModal() {
   document.getElementById('customerForm').reset();
   document.getElementById('customerFormTitle').textContent = 'Add Customer Record';
   document.getElementById('customerFormId').value = '';
+  document.getElementById('customerEntryType').value = '';
+  document.getElementById('entryTypeSelection').style.display = 'block';
+  document.getElementById('customerFormFields').style.display = 'none';
+  document.getElementById('purchaseFields').style.display = 'none';
+  document.getElementById('maintenanceFields').style.display = 'none';
   document.getElementById('productDetailsPanel').style.display = 'none';
-  document.getElementById('custTotalAmount').value = '';
-  const balanceInput = document.getElementById('custBalance');
-  if (balanceInput) balanceInput.value = '';
-  document.getElementById('custPurchaseDate').value = new Date().toISOString().slice(0,16);
-  await loadProductDropdown();
   showModal('customerModal');
 }
 
-async function loadProductDropdown() {
+function selectEntryType(type) {
+  document.getElementById('customerEntryType').value = type;
+  document.getElementById('entryTypeSelection').style.display = 'none';
+  document.getElementById('customerFormFields').style.display = 'block';
+  if (type === 'purchase') {
+    document.getElementById('purchaseFields').style.display = 'block';
+    document.getElementById('maintenanceFields').style.display = 'none';
+    document.getElementById('custPurchaseDate').value = new Date().toISOString().slice(0,16);
+    document.getElementById('custAmountPaid').value = '0';
+    loadProductCategoryDropdown();
+  } else {
+    document.getElementById('purchaseFields').style.display = 'none';
+    document.getElementById('maintenanceFields').style.display = 'block';
+    document.getElementById('maintIssueDate').value = new Date().toISOString().slice(0,16);
+    document.getElementById('maintAmountPaid').value = '0';
+    loadMaintDropdowns();
+  }
+}
+
+function resetEntryType() {
+  const entryType = document.getElementById('customerEntryType').value;
+  if (entryType.startsWith('edit')) {
+    hideModal('customerModal');
+    return;
+  }
+  document.getElementById('customerEntryType').value = '';
+  document.getElementById('entryTypeSelection').style.display = 'block';
+  document.getElementById('customerFormFields').style.display = 'none';
+}
+
+async function loadProductCategoryDropdown() {
+  const cats = await api('/categories');
+  const sel = document.getElementById('custProdCategorySelect');
+  sel.innerHTML = '<option value="">-- Select Category --</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
   allProducts = await api('/products');
+}
+
+function onCategorySelected() {
+  const cat = document.getElementById('custProdCategorySelect').value;
   const sel = document.getElementById('customerProductSelect');
-  sel.innerHTML = '<option value="">-- Select Product --</option>' + allProducts.map(p =>
-    `<option value="${p.id}">${p.name} | ${p.brand||'-'} | Stock: ${p.current_quantity} | Warranty: ${p.warranty_available?'Yes':'No'}</option>`
+  const filtered = cat ? allProducts.filter(p => p.category === cat) : allProducts;
+  sel.innerHTML = '<option value="">-- Select Product --</option>' + filtered.map(p =>
+    `<option value="${p.id}">${p.name} | ${p.brand||'-'} | Stock: ${p.current_quantity}</option>`
   ).join('');
+  document.getElementById('productDetailsPanel').style.display = 'none';
 }
 
 function onProductSelected() {
@@ -94,11 +133,13 @@ function onProductSelected() {
   document.getElementById('custProdBrand').textContent = p.brand || '-';
   document.getElementById('custProdStock').textContent = p.current_quantity;
   document.getElementById('custProdPrice').textContent = '₹' + (+p.selling_price||0).toLocaleString('en-IN');
-  document.getElementById('custProdWarranty').textContent = p.warranty_available ? 'Yes — ' + (p.warranty_period||'') : 'No';
+  document.getElementById('custProdWarranty').textContent = p.warranty_available ? 'Yes' : 'No';
+  document.getElementById('custProdWarrantyPeriod').textContent = p.warranty_available ? (p.warranty_period||'-') : '-';
   document.getElementById('custSellingPrice').value = p.selling_price || '';
   document.getElementById('custQuantity').value = 1;
   if (p.warranty_available && p.warranty_period) {
     const months = parseInt(p.warranty_period) * (p.warranty_period.toLowerCase().includes('year') ? 12 : 1) || 12;
+    const start = new Date();
     const end = new Date(); end.setMonth(end.getMonth() + months);
     document.getElementById('custWarrantyEnd').value = end.toISOString().split('T')[0];
   } else {
@@ -107,11 +148,91 @@ function onProductSelected() {
   calcCustomerTotal();
 }
 
+async function loadProductDropdown() {
+  allProducts = await api('/products');
+  const sel = document.getElementById('customerProductSelect');
+  sel.innerHTML = '<option value="">-- Select Product --</option>' + allProducts.map(p =>
+    `<option value="${p.id}">${p.name} | ${p.brand||'-'} | Stock: ${p.current_quantity}</option>`
+  ).join('');
+}
+
+async function loadMaintDropdowns() {
+  const cats = await api('/categories');
+  const sel = document.getElementById('maintCategory');
+  sel.innerHTML = '<option value="">-- Select --</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('') + '<option value="__other__">Other (Add New)</option>';
+  allProducts = await api('/products');
+  updateMaintProductDropdown();
+}
+
+function updateMaintProductDropdown() {
+  const cat = document.getElementById('maintCategory').value;
+  const psel = document.getElementById('maintProductSelect');
+  let filtered = allProducts;
+  if (cat && cat !== '__other__') filtered = allProducts.filter(p => p.category === cat);
+  const names = [...new Set(filtered.map(p => p.name))];
+  psel.innerHTML = '<option value="">-- Select --</option>' + names.map(n => `<option value="${n}">${n}</option>`).join('') + '<option value="__other__">Other (Add New)</option>';
+  document.getElementById('maintNewProduct').style.display = 'none';
+}
+
+function toggleMaintNewCategory() {
+  const v = document.getElementById('maintCategory').value;
+  document.getElementById('maintNewCategory').style.display = v === '__other__' ? 'block' : 'none';
+  if (v !== '__other__') updateMaintProductDropdown();
+}
+function toggleMaintNewProduct() { document.getElementById('maintNewProduct').style.display = document.getElementById('maintProductSelect').value === '__other__' ? 'block' : 'none'; }
+function toggleMaintFixFields() { document.getElementById('maintFixFields').style.display = document.getElementById('maintIssueStatus').value === 'Fixed' ? 'block' : 'none'; }
+function toggleMaintCharges() {
+  const show = document.getElementById('maintChargesApplicable').checked;
+  document.getElementById('maintChargesSection').style.display = show ? 'block' : 'none';
+  if (show && !document.getElementById('maintChargeRows').children.length) addMaintChargeRow();
+}
+
+function addMaintChargeRow() {
+  const container = document.getElementById('maintChargeRows');
+  const row = document.createElement('div');
+  row.className = 'charge-row';
+  row.innerHTML = `<div class="form-row" style="align-items:end">
+    <div class="form-group"><label>Part/Service *</label><input type="text" class="charge-name" required placeholder="Part or service name"></div>
+    <div class="form-group"><label>Description</label><input type="text" class="charge-desc" placeholder="Optional"></div>
+    <div class="form-group"><label>Price (₹) *</label><input type="number" class="charge-price" step="0.01" min="0.01" required oninput="calcMaintTotal()"></div>
+    <button type="button" class="btn-sm btn-danger" onclick="this.closest('.charge-row').remove();calcMaintTotal()" style="margin-bottom:0.875rem;height:32px"><i class="fas fa-times"></i></button>
+  </div>`;
+  container.appendChild(row);
+}
+
+function calcMaintTotal() {
+  const prices = document.querySelectorAll('#maintChargeRows .charge-price');
+  let total = 0;
+  prices.forEach(p => total += +p.value || 0);
+  document.getElementById('maintTotalCharges').value = total ? '₹' + total.toLocaleString('en-IN') : '₹0';
+  calcMaintBalance();
+}
+
+function calcMaintBalance() {
+  const prices = document.querySelectorAll('#maintChargeRows .charge-price');
+  let total = 0;
+  prices.forEach(p => total += +p.value || 0);
+  const paid = +document.getElementById('maintAmountPaid').value || 0;
+  const balance = total - paid;
+  document.getElementById('maintBalanceDue').value = balance >= 0 ? '₹' + balance.toLocaleString('en-IN') : '₹0';
+}
+
 function calcCustomerTotal() {
   const sp = +document.getElementById('custSellingPrice').value || 0;
   const qty = +document.getElementById('custQuantity').value || 0;
   const total = sp * qty;
   document.getElementById('custTotalAmount').value = total ? '₹' + total.toLocaleString('en-IN') : '';
+  // Real-time stock validation
+  const pid = document.getElementById('customerProductSelect').value;
+  const stockEl = document.getElementById('custProdStock');
+  if (pid && stockEl) {
+    const p = allProducts.find(x => x.id === +pid);
+    if (p && qty > p.current_quantity) {
+      stockEl.innerHTML = `<span style="color:var(--danger);font-weight:700">${p.current_quantity} ⚠️ Exceeds!</span>`;
+    } else if (p) {
+      stockEl.textContent = p.current_quantity;
+    }
+  }
   calcCustomerBalance();
 }
 
@@ -123,22 +244,69 @@ function calcCustomerBalance() {
   const balance = total - paid;
   const balanceInput = document.getElementById('custBalance');
   if (balanceInput) {
-    balanceInput.value = balance >= 0 ? '₹' + balance.toLocaleString('en-IN') : '';
+    balanceInput.value = balance >= 0 ? '₹' + balance.toLocaleString('en-IN') : '₹0';
   }
 }
 
 async function saveCustomer() {
   const saveBtn = document.querySelector('#customerForm .btn-save');
+  const editId = document.getElementById('customerFormId').value;
   const name = document.getElementById('custName').value.trim();
   const phone = document.getElementById('custPhone').value.trim();
+
+  // Common validations
   if (!name || name.length < 2) { showToast('Customer name required (min 2 chars)'); return; }
   if (/^\d+$/.test(name)) { showToast('Customer name cannot be only numbers'); return; }
-  if (phone && !/^\d{10,}$/.test(phone)) { showToast('Phone number must be 10+ digits if provided'); return; }
+  if (!phone || !/^\d{10}$/.test(phone)) { showToast('Phone number must be exactly 10 digits'); return; }
 
-  const editId = document.getElementById('customerFormId').value;
+  // Edit mode
   if (editId) {
+    const entryType = document.getElementById('customerEntryType').value;
     setBtnLoading(saveBtn, true);
-    await api('/customers/' + editId, { method: 'PUT', body: JSON.stringify({ name, phone }) });
+
+    if (entryType === 'edit-maintenance' && editId.includes('|maint|')) {
+      const [custId, , maintId] = editId.split('|');
+      await api('/customers/' + custId, { method: 'PUT', body: JSON.stringify({ name, phone }) });
+      // Rebuild maintenance data
+      let category = document.getElementById('maintCategory').value;
+      if (category === '__other__') category = document.getElementById('maintNewCategory').value.trim();
+      let product_name = document.getElementById('maintProductSelect').value;
+      if (product_name === '__other__') product_name = document.getElementById('maintNewProduct').value.trim();
+      const issueDesc = document.getElementById('maintIssueDesc').value.trim();
+      const issueStatus = document.getElementById('maintIssueStatus').value;
+      const chargesApplicable = document.getElementById('maintChargesApplicable').checked;
+      let charges = [];
+      if (chargesApplicable) {
+        document.querySelectorAll('#maintChargeRows .charge-row').forEach(row => {
+          charges.push({ name: row.querySelector('.charge-name').value.trim(), description: row.querySelector('.charge-desc').value.trim(), price: +row.querySelector('.charge-price').value });
+        });
+      }
+      const totalCharges = charges.reduce((s, c) => s + c.price, 0);
+      const paid = +document.getElementById('maintAmountPaid').value || 0;
+      const paidVia = document.getElementById('maintPaidVia').value;
+      // Delete old and recreate
+      await api('/maintenance/' + maintId, { method: 'DELETE' });
+      await api('/maintenance', { method: 'POST', body: JSON.stringify({
+        name, phone, category, product_name, issue_description: issueDesc,
+        issue_datetime: document.getElementById('maintIssueDate').value,
+        issue_status: issueStatus, notes: document.getElementById('maintNotes').value,
+        charges_applicable: chargesApplicable, charges, amount_paid: paid, paid_via: paidVia,
+        fixed_datetime: issueStatus === 'Fixed' ? document.getElementById('maintFixedDate').value : null,
+        fix_done_details: issueStatus === 'Fixed' ? document.getElementById('maintFixDetails').value : ''
+      }) });
+    } else if (entryType === 'edit-purchase' && editId.includes('|purchase|')) {
+      const [custId, , cphId] = editId.split('|');
+      await api('/customers/' + custId, { method: 'PUT', body: JSON.stringify({ name, phone }) });
+      const paid = +document.getElementById('custAmountPaid').value || 0;
+      const paidVia = document.getElementById('custPaidVia').value;
+      await api('/customer-product/' + cphId, { method: 'PUT', body: JSON.stringify({
+        amount_paid: paid, payment_status: paid > 0 ? 'Partially Paid' : 'Pending',
+        notes: document.getElementById('custNotes').value
+      }) });
+    } else {
+      await api('/customers/' + editId, { method: 'PUT', body: JSON.stringify({ name, phone }) });
+    }
+
     setBtnLoading(saveBtn, false);
     hideModal('customerModal');
     loadCustomers();
@@ -146,53 +314,178 @@ async function saveCustomer() {
     return;
   }
 
-  const product_id = document.getElementById('customerProductSelect').value;
-  if (!product_id) { showToast('Please select a product'); return; }
-  const qty = +document.getElementById('custQuantity').value;
-  if (!qty || qty <= 0 || qty !== Math.floor(qty)) { showToast('Quantity must be a whole number > 0'); return; }
-  const p = allProducts.find(x => x.id === +product_id);
-  if (p && qty > p.current_quantity) { showToast('Quantity exceeds available stock (' + p.current_quantity + ')'); return; }
+  const entryType = document.getElementById('customerEntryType').value;
 
-  const sp = +document.getElementById('custSellingPrice').value;
-  if (!sp || sp <= 0) { showToast('Selling price must be > 0'); return; }
-  const total = sp * qty;
-  const paid = +document.getElementById('custAmountPaid').value || 0;
-  if (paid < 0) { showToast('Amount paid cannot be negative'); return; }
-  if (paid > total) { showToast('Amount paid (₹'+paid+') cannot exceed total (₹'+total+')'); return; }
+  if (entryType === 'purchase') {
+    // Product Purchase validations
+    const product_id = document.getElementById('customerProductSelect').value;
+    if (!document.getElementById('custProdCategorySelect').value) { showToast('Please select a product category'); return; }
+    if (!product_id) { showToast('Please select a product'); return; }
+    const qty = +document.getElementById('custQuantity').value;
+    if (!qty || qty <= 0 || qty !== Math.floor(qty)) { showToast('Quantity must be a whole number > 0'); return; }
+    const p = allProducts.find(x => x.id === +product_id);
+    if (p && qty > p.current_quantity) { showToast('Stock not available. Please check your inventory and add stock before creating this customer purchase.'); return; }
+    const sp = +document.getElementById('custSellingPrice').value;
+    if (!sp || sp <= 0) { showToast('Selling price must be > 0'); return; }
+    const total = sp * qty;
+    const paid = +document.getElementById('custAmountPaid').value || 0;
+    if (paid < 0) { showToast('Amount paid cannot be negative'); return; }
+    if (paid > total) { showToast('Amount paid cannot exceed total amount'); return; }
+    const paidVia = document.getElementById('custPaidVia').value;
+    if (paid > 0 && !paidVia) { showToast('Paid Via is required when amount paid > 0'); return; }
+    const purchaseDate = document.getElementById('custPurchaseDate').value;
+    if (!purchaseDate) { showToast('Purchase date & time is required'); return; }
 
-  const paidVia = document.getElementById('custPaidVia').value;
-  if (!paidVia) { showToast('Please select payment method'); return; }
+    const body = {
+      name, phone, product_id: +product_id, quantity: qty,
+      selling_price_per_qty: sp, total_amount: total, amount_paid: paid, balance_amount: total - paid,
+      paid_via: paidVia, purchased_on: purchaseDate,
+      warranty_available: !!document.getElementById('custWarrantyEnd').value,
+      warranty_end_date: document.getElementById('custWarrantyEnd').value || null,
+      warranty_start_date: purchaseDate.split('T')[0],
+      notes: document.getElementById('custNotes').value
+    };
+    setBtnLoading(saveBtn, true);
+    const res = await api('/customers', { method: 'POST', body: JSON.stringify(body) });
+    setBtnLoading(saveBtn, false);
+    if (res.message && !res.customer) { showToast(res.message); return; }
 
-  const purchaseDate = document.getElementById('custPurchaseDate').value;
-  if (!purchaseDate) { showToast('Purchase date & time is required'); return; }
+  } else if (entryType === 'maintenance') {
+    // Maintenance validations
+    let category = document.getElementById('maintCategory').value;
+    if (category === '__other__') { category = document.getElementById('maintNewCategory').value.trim(); if (!category) { showToast('Please enter new category name'); return; } await api('/categories', { method: 'POST', body: JSON.stringify({ name: category }) }); }
+    if (!category) { showToast('Category required'); return; }
+    let product_name = document.getElementById('maintProductSelect').value;
+    if (product_name === '__other__') { product_name = document.getElementById('maintNewProduct').value.trim(); if (!product_name) { showToast('Please enter product name'); return; } }
+    if (!product_name) { showToast('Product name required'); return; }
+    const issueDesc = document.getElementById('maintIssueDesc').value.trim();
+    if (!issueDesc) { showToast('Issue description required'); return; }
+    const issueDate = document.getElementById('maintIssueDate').value;
+    const issueStatus = document.getElementById('maintIssueStatus').value;
+    let fixedDate = null, fixDetails = '';
+    if (issueStatus === 'Fixed') {
+      fixedDate = document.getElementById('maintFixedDate').value;
+      fixDetails = document.getElementById('maintFixDetails').value.trim();
+      if (!fixedDate) { showToast('Fixed date required when status is Fixed'); return; }
+      if (!fixDetails) { showToast('Fix done details required when status is Fixed'); return; }
+      if (issueDate && new Date(fixedDate) < new Date(issueDate)) { showToast('Fixed date cannot be before issue date'); return; }
+    }
+    const chargesApplicable = document.getElementById('maintChargesApplicable').checked;
+    let charges = [];
+    if (chargesApplicable) {
+      const rows = document.querySelectorAll('#maintChargeRows .charge-row');
+      if (!rows.length) { showToast('At least one charge row required'); return; }
+      for (const row of rows) {
+        const cname = row.querySelector('.charge-name').value.trim();
+        const cdesc = row.querySelector('.charge-desc').value.trim();
+        const cprice = +row.querySelector('.charge-price').value;
+        if (!cname) { showToast('Charge item name required'); return; }
+        if (!cprice || cprice <= 0) { showToast('Charge item price must be greater than 0'); return; }
+        charges.push({ name: cname, description: cdesc, price: cprice });
+      }
+    }
+    const totalCharges = charges.reduce((s, c) => s + c.price, 0);
+    const paid = +document.getElementById('maintAmountPaid').value || 0;
+    if (paid < 0) { showToast('Amount paid cannot be negative'); return; }
+    if (paid > totalCharges && totalCharges > 0) { showToast('Amount paid cannot exceed total charges'); return; }
+    const paidVia = document.getElementById('maintPaidVia').value;
+    if (paid > 0 && !paidVia) { showToast('Paid Via is required when amount paid > 0'); return; }
 
-  const body = {
-    name, phone, product_id: +product_id, quantity: qty,
-    selling_price_per_qty: sp, total_amount: total, amount_paid: paid, balance_amount: total - paid,
-    paid_via: paidVia, purchased_on: purchaseDate,
-    warranty_available: !!document.getElementById('custWarrantyEnd').value,
-    warranty_end_date: document.getElementById('custWarrantyEnd').value || null,
-    warranty_start_date: purchaseDate.split('T')[0],
-    notes: document.getElementById('custNotes').value
-  };
+    const body = {
+      name, phone, category, product_name, issue_description: issueDesc,
+      issue_datetime: issueDate, issue_status: issueStatus, notes: document.getElementById('maintNotes').value,
+      charges_applicable: chargesApplicable, charges, amount_paid: paid, paid_via: paidVia,
+      fixed_datetime: fixedDate, fix_done_details: fixDetails
+    };
+    setBtnLoading(saveBtn, true);
+    const res = await api('/maintenance', { method: 'POST', body: JSON.stringify(body) });
+    setBtnLoading(saveBtn, false);
+    if (res.message && !res.id) { showToast(res.message); return; }
+  }
 
-  setBtnLoading(saveBtn, true);
-  const res = await api('/customers', { method: 'POST', body: JSON.stringify(body) });
-  setBtnLoading(saveBtn, false);
-  if (res.message && !res.customer) { showToast(res.message); return; }
   hideModal('customerModal');
   loadCustomers();
   refreshDashboardCounts();
   showToast('Customer record saved', 'success');
 }
 
-async function editCustomer(id) {
-  const c = await api('/customers/' + id);
+async function editCustomer(id, entryType, refId) {
+  document.getElementById('customerForm').reset();
   document.getElementById('customerFormTitle').textContent = 'Edit Customer';
   document.getElementById('customerFormId').value = id;
+  document.getElementById('entryTypeSelection').style.display = 'none';
+  document.getElementById('customerFormFields').style.display = 'block';
+
+  const c = await api('/customers/' + id);
   document.getElementById('custName').value = c.name;
   document.getElementById('custPhone').value = c.phone;
-  document.getElementById('productDetailsPanel').style.display = 'none';
+
+  if (entryType === 'Maintenance Only' && refId) {
+    document.getElementById('customerEntryType').value = 'edit-maintenance';
+    document.getElementById('purchaseFields').style.display = 'none';
+    document.getElementById('maintenanceFields').style.display = 'block';
+    const m = await api('/maintenance/' + refId);
+    document.getElementById('customerFormId').value = id + '|maint|' + refId;
+    await loadMaintDropdowns();
+    document.getElementById('maintCategory').value = m.category || '';
+    // Set product - if exists in dropdown, select it; otherwise set Other
+    const psel = document.getElementById('maintProductSelect');
+    const opts = [...psel.options].map(o => o.value);
+    if (opts.includes(m.product_name)) { psel.value = m.product_name; }
+    else { psel.value = '__other__'; document.getElementById('maintNewProduct').style.display = 'block'; document.getElementById('maintNewProduct').value = m.product_name; }
+    document.getElementById('maintIssueDesc').value = m.issue_description || '';
+    document.getElementById('maintIssueDate').value = m.issue_datetime ? m.issue_datetime.slice(0,16) : '';
+    document.getElementById('maintIssueStatus').value = m.issue_status || 'Reported';
+    toggleMaintFixFields();
+    if (m.issue_status === 'Fixed') {
+      document.getElementById('maintFixedDate').value = m.fixed_datetime ? m.fixed_datetime.slice(0,16) : '';
+      document.getElementById('maintFixDetails').value = m.fix_done_details || '';
+    }
+    document.getElementById('maintNotes').value = m.notes || '';
+    if (m.charges_applicable && m.charges && m.charges.length) {
+      document.getElementById('maintChargesApplicable').checked = true;
+      document.getElementById('maintChargesSection').style.display = 'block';
+      document.getElementById('maintChargeRows').innerHTML = '';
+      m.charges.forEach(ch => {
+        addMaintChargeRow();
+        const rows = document.querySelectorAll('#maintChargeRows .charge-row');
+        const last = rows[rows.length - 1];
+        last.querySelector('.charge-name').value = ch.part_service_name;
+        last.querySelector('.charge-desc').value = ch.description || '';
+        last.querySelector('.charge-price').value = ch.price;
+      });
+      calcMaintTotal();
+    }
+    document.getElementById('maintAmountPaid').value = m.amount_paid || 0;
+    document.getElementById('maintPaidVia').value = m.paid_via || '';
+    calcMaintBalance();
+  } else if (entryType === 'Product Purchase' && refId) {
+    document.getElementById('customerEntryType').value = 'edit-purchase';
+    document.getElementById('purchaseFields').style.display = 'block';
+    document.getElementById('maintenanceFields').style.display = 'none';
+    document.getElementById('customerFormId').value = id + '|purchase|' + refId;
+    const h = await api('/customer-product/' + refId);
+    await loadProductCategoryDropdown();
+    // Set category
+    const catSel = document.getElementById('custProdCategorySelect');
+    if (h.product_name) {
+      const prod = allProducts.find(p => p.name === h.product_name);
+      if (prod) { catSel.value = prod.category || ''; onCategorySelected(); document.getElementById('customerProductSelect').value = prod.id; onProductSelected(); }
+    }
+    document.getElementById('custQuantity').value = h.quantity || 1;
+    document.getElementById('custSellingPrice').value = h.selling_price_per_qty || '';
+    document.getElementById('custAmountPaid').value = h.amount_paid || 0;
+    document.getElementById('custPaidVia').value = h.paid_via || '';
+    document.getElementById('custPurchaseDate').value = h.purchased_on ? h.purchased_on.slice(0,16) : '';
+    document.getElementById('custWarrantyEnd').value = h.warranty_end_date || '';
+    document.getElementById('custNotes').value = h.notes || '';
+    calcCustomerTotal();
+  } else {
+    // Basic edit - just name/phone
+    document.getElementById('customerEntryType').value = 'edit';
+    document.getElementById('purchaseFields').style.display = 'none';
+    document.getElementById('maintenanceFields').style.display = 'none';
+  }
   showModal('customerModal');
 }
 
@@ -209,45 +502,69 @@ async function viewCustomerHistory(customerId) {
   const data = await api('/customers/' + customerId + '/history');
   const customer = await api('/customers/' + customerId);
   const container = document.getElementById('customerHistoryContent');
-  const totalPaid = data.reduce((s, r) => s + (+r.amount_paid || 0), 0);
-  const totalBalance = data.reduce((s, r) => s + (+r.balance_amount || 0), 0);
+
+  // Get maintenance records for this customer
+  const allData = await api('/customers?search=' + encodeURIComponent(customer.phone || customer.name));
+  const custRecords = allData.filter(r => +r.id === +customerId);
+  const maintenances = custRecords.filter(r => r.entry_type === 'Maintenance Only');
+
+  const totalPurchaseAmt = data.reduce((s,r) => s+(+r.total_amount||0), 0);
+  const totalMaintAmt = maintenances.reduce((s,r) => s+(+r.total_amount||0), 0);
+  const totalPaid = data.reduce((s,r) => s+(+r.amount_paid||0), 0) + maintenances.reduce((s,r) => s+(+r.amount_paid||0), 0);
+  const totalBalance = data.reduce((s,r) => s+(+r.balance_amount||0), 0) + maintenances.reduce((s,r) => s+(+r.balance_amount||0), 0);
 
   let html = `<button class="btn-back" onclick="showCustomerList()"><i class="fas fa-arrow-left"></i> Back</button>
     <h2>${customer.name} <small style="color:var(--text-muted)">${customer.phone}</small></h2>
     <div class="stats-row">
-      <div class="stat-card"><h4>${data.length}</h4><p>Products</p></div>
-      <div class="stat-card"><h4>${data.reduce((s,r)=>s+(+r.quantity||0),0)}</h4><p>Total Qty</p></div>
+      <div class="stat-card"><h4>${data.length}</h4><p>Purchases</p></div>
+      <div class="stat-card"><h4>${maintenances.length}</h4><p>Maintenance</p></div>
+      <div class="stat-card"><h4>${formatCurrency(totalPurchaseAmt + totalMaintAmt)}</h4><p>Total Amount</p></div>
       <div class="stat-card"><h4>${formatCurrency(totalPaid)}</h4><p>Total Paid</p></div>
-      <div class="stat-card"><h4>${formatCurrency(totalBalance)}</h4><p>Balance Due</p></div>
-      <div class="stat-card"><h4>${data.reduce((s,r)=>s+(+r.issue_count||0),0)}</h4><p>Issues</p></div>
+      <div class="stat-card"><h4 style="color:var(--danger)">${formatCurrency(totalBalance)}</h4><p>Balance Due</p></div>
     </div>`;
 
+  // Product Purchases with their issues
   if (data.length) {
-    html += '<h3 style="margin-bottom:0.75rem">Purchase & Issue Timeline</h3><div class="timeline">';
-    data.forEach(r => {
-      html += `<div class="timeline-item">
-        <div class="timeline-date">${formatDate(r.purchased_on)} — Purchase</div>
-        <div class="timeline-title">${r.product_name} (Qty: ${r.quantity})</div>
-        <div class="timeline-detail">Total: ${formatCurrency(r.total_amount||0)} | Paid: ${formatCurrency(r.amount_paid)} | Balance: ${formatCurrency(r.balance_amount||0)} ${r.paid_via?'| via '+r.paid_via:''}</div>
+    html += '<h3 style="margin-bottom:0.75rem"><i class="fas fa-shopping-cart"></i> Product Purchases</h3>';
+    for (const r of data) {
+      const issueBadge = r.issue_count > 0 ? `<span class="badge badge-warning">${r.issue_count} issue${r.issue_count>1?'s':''}</span>` : '';
+      html += `<div class="timeline"><div class="timeline-item">
+        <div class="timeline-date">${formatDate(r.purchased_on)}</div>
+        <div class="timeline-title">${r.product_name} (Qty: ${r.quantity}) ${issueBadge}</div>
+        <div class="timeline-detail">Total: ${formatCurrency(r.total_amount||0)} | Paid: ${formatCurrency(r.amount_paid)} | <span style="color:var(--danger)">Balance: ${formatCurrency(r.balance_amount||0)}</span> ${r.paid_via?'| via '+r.paid_via:''}</div>
         <div class="timeline-detail">${getWarrantyBadge(r.warranty_end_date, r.extended_warranty_end_date)}</div>
         <div class="card-actions" style="margin-top:0.5rem">
-          <button class="btn-sm btn-primary" onclick="viewProductDetail(${r.id})">Full Detail</button>
+          <button class="btn-sm btn-primary" onclick="viewProductDetail(${r.id})">Details & Issues</button>
           <button class="btn-sm btn-success" onclick="addIssueFor(${r.id})">Add Issue</button>
+          ${+r.balance_amount>0?`<button class="btn-sm btn-warning" onclick="openPaymentUpdate('${r.id}','purchase',${r.balance_amount})">Pay</button>`:''}
         </div>
-      </div>`;
-    });
-    html += '</div>';
-    html += `<div class="mobile-cards">` + data.map(r => `<div class="mobile-card">
-      <h4>${r.product_name}</h4><p>Qty: ${r.quantity} | ${formatDate(r.purchased_on)}</p>
-      <p>Total: ${formatCurrency(r.total_amount||0)} | Paid: ${formatCurrency(r.amount_paid)} | Balance: ${formatCurrency(r.balance_amount||0)}</p>
-      <p>${getWarrantyBadge(r.warranty_end_date, r.extended_warranty_end_date)} Issues: ${r.issue_count||0}</p>
-      <div class="card-actions">
-        <button class="btn-sm btn-primary" onclick="viewProductDetail(${r.id})">Detail</button>
-        <button class="btn-sm btn-success" onclick="addIssueFor(${r.id})">Issue</button>
-      </div></div>`).join('') + '</div>';
-  } else {
-    html += '<div class="empty-state"><p>No purchase records</p></div>';
+      </div></div>`;
+    }
   }
+
+  // Maintenance Records
+  if (maintenances.length) {
+    html += '<h3 style="margin:1.25rem 0 0.75rem"><i class="fas fa-wrench"></i> Maintenance Records</h3>';
+    maintenances.forEach(r => {
+      const isFixed = r.issue_status === 'Fixed';
+      html += `<div class="timeline"><div class="timeline-item ${isFixed?'fixed':''}">
+        <div class="timeline-date">${formatDate(r.entry_date)}</div>
+        <div class="timeline-title">${r.product_name} ${getStatusBadge(r.issue_status)}</div>
+        <div class="timeline-detail"><strong>Issue:</strong> ${r.issue_description||''}</div>
+        <div class="timeline-detail">Charges: ${formatCurrency(r.total_amount||0)} | Paid: ${formatCurrency(r.amount_paid)} | <span style="color:var(--danger)">Balance: ${formatCurrency(r.balance_amount||0)}</span></div>
+        <div class="card-actions" style="margin-top:0.5rem">
+          ${!isFixed?`<button class="btn-sm btn-success" onclick="openMarkFixed(${r.maint_id})">Mark Fixed</button>`:''}
+          ${+r.balance_amount>0?`<button class="btn-sm btn-warning" onclick="openPaymentUpdate('${r.maint_id}','maintenance',${r.balance_amount})">Pay</button>`:''}
+          <button class="btn-sm btn-info" onclick="editMaintIssue(${r.maint_id})">Edit</button>
+        </div>
+      </div></div>`;
+    });
+  }
+
+  if (!data.length && !maintenances.length) {
+    html += '<div class="empty-state"><p>No records found for this customer</p></div>';
+  }
+
   container.innerHTML = html;
   document.getElementById('customersListView').style.display = 'none';
   document.getElementById('customerHistoryView').style.display = 'block';
@@ -256,6 +573,7 @@ async function viewCustomerHistory(customerId) {
 function showCustomerList() {
   document.getElementById('customersListView').style.display = 'block';
   document.getElementById('customerHistoryView').style.display = 'none';
+  document.getElementById('pageTitle').textContent = 'Customers';
 }
 
 
@@ -493,27 +811,141 @@ async function loadIssues(status = '') {
   const tbody = document.getElementById('issuesTableBody');
   const cards = document.getElementById('issuesCards');
   if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="fas fa-tools"></i><p>No issues found</p></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><i class="fas fa-tools"></i><p>No issues found</p></td></tr>';
     cards.innerHTML = '<div class="empty-state"><i class="fas fa-tools"></i><p>No issues</p></div>';
     return;
   }
-  tbody.innerHTML = data.map(i => `<tr>
-    <td>${i.customer_name}</td><td>${i.product_name}</td><td>${formatDate(i.issue_date)}</td>
-    <td>${i.issue_description.substring(0, 40)}${i.issue_description.length > 40 ? '...' : ''}</td>
-    <td>${getStatusBadge(i.issue_status)}</td><td>${i.warranty_status_at_issue || '-'}</td>
+  tbody.innerHTML = data.map(i => {
+    const isMaint = i.source_type === 'maintenance';
+    const balance = (+i.charge_amount||0)-(+i.amount_paid||0);
+    const typeBadge = isMaint ? '<span class="badge badge-info" style="font-size:0.65rem">Maint</span>' : '';
+    let actions = '';
+    if (i.issue_status !== 'Fixed' && i.issue_status !== 'Returned to Customer') {
+      actions += isMaint ? `<button class="btn-sm btn-success" onclick="openMarkFixed(${i.id})" title="Mark Fixed"><i class="fas fa-check"></i></button>` : `<button class="btn-sm btn-success" onclick="openFixModal(${i.id})" title="Mark Fixed"><i class="fas fa-check"></i></button>`;
+    }
+    if (balance > 0) {
+      actions += isMaint ? `<button class="btn-sm btn-primary" onclick="openPaymentUpdate('${i.id}','maintenance',${balance})" title="Update Payment"><i class="fas fa-rupee-sign"></i></button>` : `<button class="btn-sm btn-primary" onclick="openIssuePayment(${i.id},${balance})" title="Update Payment"><i class="fas fa-rupee-sign"></i></button>`;
+    }
+    actions += isMaint ? `<button class="btn-sm btn-warning" onclick="editMaintIssue(${i.id})" title="Edit"><i class="fas fa-edit"></i></button>` : `<button class="btn-sm btn-warning" onclick="editIssue(${i.id})" title="Edit"><i class="fas fa-edit"></i></button>`;
+    return `<tr>
+    <td>${i.customer_name}<br><small style="color:var(--text-muted)">${i.customer_phone||''}</small></td>
+    <td>${i.product_name} ${typeBadge}</td>
+    <td>${formatDate(i.issue_date)}</td>
+    <td style="max-width:200px">${i.issue_description}</td>
+    <td>${getStatusBadge(i.issue_status)}</td>
+    <td>${i.warranty_status_at_issue || '-'}</td>
     <td>${formatCurrency(i.charge_amount)}</td>
-    <td>
-      ${i.issue_status !== 'Fixed' ? `<button class="btn-sm btn-success" onclick="openFixModal(${i.id})">Fix</button>` : ''}
-      <button class="btn-sm btn-warning" onclick="editIssue(${i.id})">Edit</button>
-    </td></tr>`).join('');
-  cards.innerHTML = data.map(i => `<div class="mobile-card">
-    <h4>${i.product_name}</h4><p>Customer: ${i.customer_name}</p>
-    <p>Issue: ${i.issue_description.substring(0, 50)}</p>
-    <p>${formatDate(i.issue_date)} | ${getStatusBadge(i.issue_status)} | ${formatCurrency(i.charge_amount)}</p>
-    <div class="card-actions">
-      ${i.issue_status !== 'Fixed' ? `<button class="btn-sm btn-success" onclick="openFixModal(${i.id})">Mark Fixed</button>` : ''}
-      <button class="btn-sm btn-warning" onclick="editIssue(${i.id})">Edit</button>
-    </div></div>`).join('');
+    <td>${formatCurrency(i.amount_paid||0)}</td>
+    <td style="color:var(--danger)">${formatCurrency(balance)}</td>
+    <td>${actions}</td></tr>`;
+  }).join('');
+  cards.innerHTML = data.map(i => {
+    const isMaint = i.source_type === 'maintenance';
+    const balance = (+i.charge_amount||0)-(+i.amount_paid||0);
+    let actions = '';
+    if (i.issue_status !== 'Fixed' && i.issue_status !== 'Returned to Customer') {
+      actions += isMaint ? `<button class="btn-sm btn-success" onclick="openMarkFixed(${i.id})">Mark Fixed</button>` : `<button class="btn-sm btn-success" onclick="openFixModal(${i.id})">Mark Fixed</button>`;
+    }
+    if (balance > 0) {
+      actions += isMaint ? `<button class="btn-sm btn-primary" onclick="openPaymentUpdate('${i.id}','maintenance',${balance})">Pay</button>` : `<button class="btn-sm btn-primary" onclick="openIssuePayment(${i.id},${balance})">Pay</button>`;
+    }
+    actions += isMaint ? `<button class="btn-sm btn-warning" onclick="editMaintIssue(${i.id})">Edit</button>` : `<button class="btn-sm btn-warning" onclick="editIssue(${i.id})">Edit</button>`;
+    return `<div class="mobile-card">
+    <h4>${i.product_name} ${getStatusBadge(i.issue_status)} ${isMaint?'<span class="badge badge-info">Maintenance</span>':''}</h4>
+    <p><strong>${i.customer_name}</strong> ${i.customer_phone?'| '+i.customer_phone:''}</p>
+    <p><strong>Issue:</strong> ${i.issue_description}</p>
+    <p><strong>Date:</strong> ${formatDate(i.issue_date)} | <strong>Warranty:</strong> ${i.warranty_status_at_issue||'-'}</p>
+    ${i.fix_done_details?`<p><strong>Fix:</strong> ${i.fix_done_details} (${formatDate(i.fixed_datetime)})</p>`:''}
+    <p><strong>Charges:</strong> ${formatCurrency(i.charge_amount)} | <strong>Paid:</strong> ${formatCurrency(i.amount_paid||0)} | <span style="color:var(--danger)"><strong>Due:</strong> ${formatCurrency(balance)}</span></p>
+    ${i.payment_mode?`<p><strong>Paid Via:</strong> ${i.payment_mode}</p>`:''}
+    <div class="card-actions">${actions}</div></div>`;
+  }).join('');
+}
+
+function openIssuePayment(issueId, balance) {
+  document.getElementById('payRefId').value = issueId;
+  document.getElementById('payRefType').value = 'issue';
+  document.getElementById('payCurrentBalance').value = '₹' + (+balance).toLocaleString('en-IN');
+  document.getElementById('payAmount').value = '';
+  document.getElementById('payPaidVia').value = '';
+  showModal('paymentModal');
+}
+
+async function editMaintIssue(id) {
+  const m = await api('/maintenance/' + id);
+  if (!m || m.message) { showToast('Record not found'); return; }
+  const balance = (+m.total_charges||0) - (+m.amount_paid||0);
+  const container = document.getElementById('confirmMsg');
+  document.getElementById('confirmTitle').textContent = 'Edit Maintenance — ' + (m.product_name||'');
+  container.innerHTML = `
+    <div style="text-align:left;font-size:0.82rem;max-height:60vh;overflow-y:auto">
+      <div style="background:var(--bg-tertiary);padding:0.75rem;border-radius:8px;margin-bottom:0.75rem;border:1px solid var(--border)">
+        <strong>${m.customer_name}</strong> — ${m.customer_phone||''}<br>
+        <strong>Product:</strong> ${m.product_name}<br>
+        <strong>Issue:</strong> ${m.issue_description}<br>
+        <strong>Date:</strong> ${m.issue_datetime ? new Date(m.issue_datetime).toLocaleDateString('en-IN') : '-'}
+        ${m.fix_done_details ? '<br><strong>Fix:</strong> '+m.fix_done_details : ''}
+        ${m.charges && m.charges.length ? '<br><strong>Charges:</strong> '+m.charges.map(c=>c.part_service_name+' ₹'+c.price).join(', ') : ''}
+      </div>
+      <div style="margin-bottom:0.5rem"><label style="font-size:0.78rem;font-weight:500">Status</label>
+        <select id="editMaintStatus" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:6px;font-size:0.82rem">
+          ${['Reported','Checking','Repair In Progress','Fixed'].map(s => `<option value="${s}" ${s===m.issue_status?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div style="margin-bottom:0.5rem"><label style="font-size:0.78rem;font-weight:500">Total Charges (₹)</label>
+        <input type="text" value="₹${(+m.total_charges||0).toLocaleString('en-IN')}" readonly style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:6px;font-size:0.82rem;background:var(--bg-tertiary)">
+      </div>
+      <div style="margin-bottom:0.5rem"><label style="font-size:0.78rem;font-weight:500">Amount Paid (₹)</label>
+        <input type="number" id="editMaintPaid" value="${m.amount_paid||0}" step="0.01" min="0" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:6px;font-size:0.82rem" oninput="document.getElementById('editMaintBalance').value='₹'+((${m.total_charges||0})-(+this.value||0)).toLocaleString('en-IN')">
+      </div>
+      <div style="margin-bottom:0.5rem"><label style="font-size:0.78rem;font-weight:500;color:var(--danger)">Balance Due (₹)</label>
+        <input type="text" id="editMaintBalance" value="₹${balance.toLocaleString('en-IN')}" readonly style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:6px;font-size:0.82rem;background:var(--bg-tertiary);font-weight:600;color:var(--danger)">
+      </div>
+      <div style="margin-bottom:0.5rem"><label style="font-size:0.78rem;font-weight:500">Paid Via</label>
+        <select id="editMaintPaidVia" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:6px;font-size:0.82rem">
+          <option value="">-- Select --</option><option>Cash</option><option>UPI</option><option>PhonePe</option><option>Google Pay</option><option>Paytm</option><option>Card</option><option>Bank Transfer</option><option>Other</option>
+        </select>
+      </div>
+    </div>`;
+  if (m.paid_via) document.getElementById('editMaintPaidVia').value = m.paid_via;
+  document.getElementById('confirmYesBtn').textContent = 'Update';
+  document.getElementById('confirmYesBtn').style.background = 'var(--primary)';
+  document.getElementById('confirmYesBtn').onclick = async () => {
+    const status = document.getElementById('editMaintStatus').value;
+    const paid = +document.getElementById('editMaintPaid').value || 0;
+    const paidVia = document.getElementById('editMaintPaidVia').value;
+    if (paid > (+m.total_charges||0)) { showToast('Paid cannot exceed total charges'); return; }
+    hideModal('confirmModal');
+    // Update status
+    if (status === 'Fixed' && m.issue_status !== 'Fixed') {
+      await api('/maintenance/' + id + '/fix', { method: 'PUT', body: JSON.stringify({ fixed_datetime: new Date().toISOString(), fix_done_details: 'Marked fixed from issues tab' }) });
+    } else if (status !== m.issue_status) {
+      // For non-fixed status changes, we update via a general endpoint - use delete+recreate approach is too heavy, just update directly
+      await api('/maintenance/' + id + '/fix', { method: 'PUT', body: JSON.stringify({ fixed_datetime: null, fix_done_details: '' }) }).catch(()=>{});
+    }
+    // Update payment if changed
+    if (paid !== (+m.amount_paid||0)) {
+      const diff = paid - (+m.amount_paid||0);
+      if (diff > 0) await api('/maintenance/' + id + '/payment', { method: 'PUT', body: JSON.stringify({ amount_paid: diff, paid_via: paidVia }) });
+    }
+    loadIssues();
+    showToast('Maintenance updated', 'success');
+    document.getElementById('confirmYesBtn').textContent = 'Yes, Delete';
+    document.getElementById('confirmYesBtn').style.background = 'var(--danger)';
+  };
+  showModal('confirmModal');
+}
+
+function viewIssueCustomer(cphId) {
+  // Navigate to customers page and show product detail
+  document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+  document.querySelector('[data-page="customers"]').classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('customersPage').classList.add('active');
+  document.getElementById('customersListView').style.display = 'none';
+  document.getElementById('customerHistoryView').style.display = 'block';
+  document.getElementById('pageTitle').textContent = 'Customers';
+  viewProductDetail(cphId);
 }
 
 function addIssueFor(cphId) {
@@ -586,22 +1018,53 @@ async function saveFixIssue() {
 }
 
 async function editIssue(id) {
-  // Show status update modal
-  document.getElementById('confirmTitle').textContent = 'Update Issue Status';
-  document.getElementById('confirmMsg').innerHTML = '';
-  const sel = document.createElement('select');
-  sel.style.cssText = 'width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;margin-top:0.5rem';
-  ['Reported','Checking','Repair In Progress','Fixed','Returned to Customer','Rejected'].forEach(s => {
-    sel.innerHTML += `<option value="${s}">${s}</option>`;
-  });
-  document.getElementById('confirmMsg').appendChild(sel);
+  const issue = await api('/issues').then(list => list.find(i => i.id === +id));
+  if (!issue) { showToast('Issue not found'); return; }
+  const container = document.getElementById('confirmMsg');
+  document.getElementById('confirmTitle').textContent = 'Edit Issue — ' + (issue.product_name||'');
+  container.innerHTML = `
+    <div style="text-align:left;font-size:0.82rem;max-height:60vh;overflow-y:auto">
+      <div style="background:var(--bg-tertiary);padding:0.75rem;border-radius:8px;margin-bottom:0.75rem;border:1px solid var(--border)">
+        <strong>${issue.customer_name}</strong> — ${issue.customer_phone||''}<br>
+        <strong>Product:</strong> ${issue.product_name}<br>
+        <strong>Issue:</strong> ${issue.issue_description}<br>
+        <strong>Date:</strong> ${issue.issue_date ? new Date(issue.issue_date).toLocaleDateString('en-IN') : '-'}<br>
+        <strong>Warranty:</strong> ${issue.warranty_status_at_issue||'-'}
+        ${issue.fix_done_details ? '<br><strong>Fix:</strong> '+issue.fix_done_details : ''}
+      </div>
+      <div style="margin-bottom:0.5rem"><label style="font-size:0.78rem;font-weight:500">Status</label>
+        <select id="editIssueStatus" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:6px;font-size:0.82rem">
+          ${['Reported','Checking','Repair In Progress','Fixed','Returned to Customer','Rejected'].map(s => `<option value="${s}" ${s===issue.issue_status?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div style="margin-bottom:0.5rem"><label style="font-size:0.78rem;font-weight:500">Charges (₹)</label>
+        <input type="number" id="editIssueCharges" value="${issue.charge_amount||0}" step="0.01" min="0" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:6px;font-size:0.82rem">
+      </div>
+      <div style="margin-bottom:0.5rem"><label style="font-size:0.78rem;font-weight:500">Amount Paid (₹)</label>
+        <input type="number" id="editIssuePaid" value="${issue.amount_paid||0}" step="0.01" min="0" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:6px;font-size:0.82rem" oninput="document.getElementById('editIssueBalance').value='₹'+((+document.getElementById('editIssueCharges').value||0)-(+this.value||0)).toLocaleString('en-IN')">
+      </div>
+      <div style="margin-bottom:0.5rem"><label style="font-size:0.78rem;font-weight:500;color:var(--danger)">Balance Due (₹)</label>
+        <input type="text" id="editIssueBalance" value="₹${((+issue.charge_amount||0)-(+issue.amount_paid||0)).toLocaleString('en-IN')}" readonly style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:6px;font-size:0.82rem;background:var(--bg-tertiary);font-weight:600;color:var(--danger)">
+      </div>
+      <div style="margin-bottom:0.5rem"><label style="font-size:0.78rem;font-weight:500">Paid Via</label>
+        <select id="editIssuePaidVia" style="width:100%;padding:0.5rem;border:1px solid var(--border);border-radius:6px;font-size:0.82rem">
+          <option value="">-- Select --</option><option>Cash</option><option>UPI</option><option>PhonePe</option><option>Google Pay</option><option>Paytm</option><option>Card</option><option>Bank Transfer</option><option>Other</option>
+        </select>
+      </div>
+    </div>`;
+  if (issue.payment_mode) document.getElementById('editIssuePaidVia').value = issue.payment_mode;
   document.getElementById('confirmYesBtn').textContent = 'Update';
   document.getElementById('confirmYesBtn').style.background = 'var(--primary)';
   document.getElementById('confirmYesBtn').onclick = async () => {
+    const status = document.getElementById('editIssueStatus').value;
+    const charges = +document.getElementById('editIssueCharges').value || 0;
+    const paid = +document.getElementById('editIssuePaid').value || 0;
+    const paidVia = document.getElementById('editIssuePaidVia').value;
+    if (paid > charges) { showToast('Paid cannot exceed charges'); return; }
     hideModal('confirmModal');
-    await api('/issues/' + id, { method: 'PUT', body: JSON.stringify({ issue_status: sel.value }) });
+    await api('/issues/' + id, { method: 'PUT', body: JSON.stringify({ issue_status: status, charge_amount: charges, amount_paid: paid, balance_amount: charges - paid, payment_mode: paidVia }) });
     loadIssues();
-    showToast('Issue status updated', 'success');
+    showToast('Issue updated', 'success');
     document.getElementById('confirmYesBtn').textContent = 'Yes, Delete';
     document.getElementById('confirmYesBtn').style.background = 'var(--danger)';
   };
@@ -755,6 +1218,97 @@ async function viewProdHistInline(productId) {
 
 
 // ============================================================================
+// PAYMENT UPDATE, MARK FIXED, DELETE MAINTENANCE
+// ============================================================================
+
+function openPaymentUpdate(refId, refType, balance) {
+  document.getElementById('payRefId').value = refId;
+  document.getElementById('payRefType').value = refType;
+  document.getElementById('payCurrentBalance').value = '₹' + (+balance).toLocaleString('en-IN');
+  document.getElementById('payAmount').value = '';
+  document.getElementById('payPaidVia').value = '';
+  showModal('paymentModal');
+}
+
+async function savePaymentUpdate() {
+  const refId = document.getElementById('payRefId').value;
+  const refType = document.getElementById('payRefType').value;
+  const amount = +document.getElementById('payAmount').value;
+  const paidVia = document.getElementById('payPaidVia').value;
+  if (!amount || amount <= 0) { showToast('Amount must be greater than 0'); return; }
+  if (!paidVia) { showToast('Paid Via is required'); return; }
+  let endpoint;
+  if (refType === 'maintenance') endpoint = '/maintenance/' + refId + '/payment';
+  else if (refType === 'issue') endpoint = '/issues/' + refId + '/payment';
+  else endpoint = '/customer-product/' + refId + '/payment';
+  const res = await api(endpoint, { method: 'PUT', body: JSON.stringify({ amount_paid: amount, paid_via: paidVia }) });
+  if (res.message && res.message.includes('cannot')) { showToast(res.message); return; }
+  hideModal('paymentModal');
+  loadCustomers();
+  loadIssues();
+  showToast('Payment updated', 'success');
+}
+
+function openMarkFixed(maintId) {
+  document.getElementById('fixMaintId').value = maintId;
+  document.getElementById('fixMaintDate').value = new Date().toISOString().slice(0, 16);
+  document.getElementById('fixMaintDetails').value = '';
+  showModal('markFixedModal');
+}
+
+async function saveMarkFixed() {
+  const maintId = document.getElementById('fixMaintId').value;
+  const fixedDate = document.getElementById('fixMaintDate').value;
+  const fixDetails = document.getElementById('fixMaintDetails').value.trim();
+  if (!fixedDate) { showToast('Fixed date required'); return; }
+  if (!fixDetails) { showToast('Fix done details required'); return; }
+  const res = await api('/maintenance/' + maintId + '/fix', { method: 'PUT', body: JSON.stringify({ fixed_datetime: fixedDate, fix_done_details: fixDetails }) });
+  if (res.message && res.message.includes('cannot')) { showToast(res.message); return; }
+  hideModal('markFixedModal');
+  loadCustomers();
+  showToast('Issue marked as fixed', 'success');
+}
+
+function deleteMaintenance(id) {
+  showConfirm('Delete Maintenance Record?', 'This will permanently remove this maintenance record.', async () => {
+    await api('/maintenance/' + id, { method: 'DELETE' });
+    loadCustomers();
+    refreshDashboardCounts();
+    showToast('Maintenance record deleted', 'success');
+  });
+}
+
+// ============================================================================
+// CUSTOMER TIMELINE VIEW
+// ============================================================================
+
+async function viewCustomerTimeline(customerId) {
+  const timeline = await api('/customers/' + customerId + '/timeline');
+  const customer = await api('/customers/' + customerId);
+  const container = document.getElementById('customerHistoryContent');
+  let html = `<button class="btn-back" onclick="showCustomerList()"><i class="fas fa-arrow-left"></i> Back</button>
+    <h2>${customer.name} <small style="color:var(--text-muted)">${customer.phone}</small></h2>
+    <h3 style="margin-bottom:0.75rem">Full Timeline</h3>`;
+  if (timeline.length) {
+    html += '<div class="timeline">';
+    timeline.forEach(t => {
+      const icon = t.event_type.includes('purchase') ? 'shopping-cart' : t.event_type.includes('fix') ? 'check-circle' : t.event_type.includes('payment') ? 'rupee-sign' : 'clock';
+      html += `<div class="timeline-item ${t.event_type.includes('fix')?'fixed':''}">
+        <div class="timeline-date"><i class="fas fa-${icon}"></i> ${formatDate(t.created_at)}</div>
+        <div class="timeline-title">${t.event_type.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase())}</div>
+        <div class="timeline-detail">${t.event_description||''}</div>
+      </div>`;
+    });
+    html += '</div>';
+  } else {
+    html += '<div class="empty-state"><p>No timeline events yet</p></div>';
+  }
+  container.innerHTML = html;
+  document.getElementById('customersListView').style.display = 'none';
+  document.getElementById('customerHistoryView').style.display = 'block';
+}
+
+// ============================================================================
 // ENHANCED SEARCH & FILTER SYSTEM
 // ============================================================================
 
@@ -771,35 +1325,56 @@ function renderCustomers(data) {
   const tbody = document.getElementById('customersTableBody');
   const cards = document.getElementById('customersCards');
   if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="11" class="empty-state"><i class="fas fa-users"></i><p>No customer records found</p></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="14" class="empty-state"><i class="fas fa-users"></i><p>No customer records found</p></td></tr>';
     cards.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><p>No customer records</p></div>';
     return;
   }
-  tbody.innerHTML = data.map(c => `<tr>
-    <td>${c.name}</td><td>${c.phone||'-'}</td><td>${c.product_name||'-'}</td><td>${c.quantity||0}</td>
-    <td>${formatCurrency(c.total_amount)}</td><td>${formatCurrency(c.amount_paid)}</td>
-    <td>${getWarrantyBadge(c.warranty_end_date)}</td>
-    <td>${c.purchased_on?formatDate(c.purchased_on):'-'}</td>
-    <td>${c.created_at?formatDate(c.created_at):'-'}</td>
-    <td>${c.updated_at?formatDate(c.updated_at):'-'}</td>
-    <td>
-      <button class="btn-sm btn-info" onclick="viewCustomerHistory(${c.id})" title="History"><i class="fas fa-history"></i></button>
-      ${c.cph_id?`<button class="btn-sm btn-primary" onclick="addIssueFor(${c.cph_id})" title="Issue"><i class="fas fa-tools"></i></button>`:''}
-      <button class="btn-sm btn-warning" onclick="editCustomer(${c.id})" title="Edit"><i class="fas fa-edit"></i></button>
-      <button class="btn-sm btn-danger" onclick="deleteCustomer(${c.id})" title="Delete"><i class="fas fa-trash"></i></button>
-    </td></tr>`).join('');
-  cards.innerHTML = data.map(c => `<div class="mobile-card">
-    <h4>${c.name} <small style="color:var(--text-muted)">${c.phone||''}</small></h4>
-    <p>Product: ${c.product_name||'-'} | Qty: ${c.quantity||0}</p>
-    <p>Total: ${formatCurrency(c.total_amount)} | Paid: ${formatCurrency(c.amount_paid)}</p>
-    <p>${getWarrantyBadge(c.warranty_end_date)} ${c.purchased_on?formatDate(c.purchased_on):''}</p>
-    <p style="font-size:0.72rem;color:var(--text-muted)">Created: ${c.created_at?formatDate(c.created_at):'-'} | Modified: ${c.updated_at?formatDate(c.updated_at):'-'}</p>
-    <div class="card-actions">
-      <button class="btn-sm btn-info" onclick="viewCustomerHistory(${c.id})">History</button>
-      ${c.cph_id?`<button class="btn-sm btn-primary" onclick="addIssueFor(${c.cph_id})">Issue</button>`:''}
-      <button class="btn-sm btn-warning" onclick="editCustomer(${c.id})">Edit</button>
-      <button class="btn-sm btn-danger" onclick="deleteCustomer(${c.id})">Delete</button>
-    </div></div>`).join('');
+  tbody.innerHTML = data.map(c => {
+    const isMaint = c.entry_type === 'Maintenance Only';
+    const entryBadge = isMaint ? '<span class="badge badge-info">Maintenance</span>' : c.entry_type === 'Product Purchase' ? '<span class="badge badge-success">Purchase</span>' : '<span class="badge badge-secondary">-</span>';
+    const issueStatusBadge = c.issue_status ? getStatusBadge(c.issue_status) : '-';
+    const payBadge = c.payment_status ? getStatusBadge(c.payment_status) : '-';
+    let actions = `<button class="btn-sm btn-info" onclick="viewCustomerHistory(${c.id})" title="History"><i class="fas fa-history"></i></button>`;
+    if (isMaint) {
+      if (c.issue_status !== 'Fixed') actions += `<button class="btn-sm btn-success" onclick="openMarkFixed(${c.maint_id})" title="Mark Fixed"><i class="fas fa-check"></i></button>`;
+      if (+c.balance_amount > 0) actions += `<button class="btn-sm btn-primary" onclick="openPaymentUpdate('${c.maint_id}','maintenance',${c.balance_amount})" title="Update Payment"><i class="fas fa-rupee-sign"></i></button>`;
+      actions += `<button class="btn-sm btn-danger" onclick="deleteMaintenance(${c.maint_id})" title="Delete"><i class="fas fa-trash"></i></button>`;
+    } else if (c.cph_id) {
+      actions += `<button class="btn-sm btn-primary" onclick="addIssueFor(${c.cph_id})" title="Add Issue"><i class="fas fa-tools"></i></button>`;
+      if (+c.balance_amount > 0) actions += `<button class="btn-sm btn-success" onclick="openPaymentUpdate('${c.cph_id}','purchase',${c.balance_amount})" title="Update Payment"><i class="fas fa-rupee-sign"></i></button>`;
+    }
+    actions += `<button class="btn-sm btn-warning" onclick="editCustomer(${c.id},'${c.entry_type||''}',${c.maint_id||c.cph_id||'null'})" title="Edit"><i class="fas fa-edit"></i></button>`;
+    actions += `<button class="btn-sm btn-danger" onclick="deleteCustomer(${c.id})" title="Delete"><i class="fas fa-trash"></i></button>`;
+    return `<tr>
+      <td>${c.name}</td><td>${c.phone||'-'}</td><td>${entryBadge}</td><td>${c.product_name||'-'}</td><td>${c.quantity||'-'}</td>
+      <td>${formatCurrency(c.total_amount)}</td><td>${formatCurrency(c.amount_paid)}</td><td style="color:var(--danger)">${formatCurrency(c.balance_amount)}</td>
+      <td>${payBadge}</td><td>${issueStatusBadge}</td>
+      <td>${c.entry_date?formatDate(c.entry_date):'-'}</td>
+      <td>${c.created_at?formatDate(c.created_at):'-'}</td><td>${c.updated_at?formatDate(c.updated_at):'-'}</td>
+      <td>${actions}</td></tr>`;
+  }).join('');
+  cards.innerHTML = data.map(c => {
+    const isMaint = c.entry_type === 'Maintenance Only';
+    const entryBadge = isMaint ? '<span class="badge badge-info">Maintenance</span>' : c.entry_type === 'Product Purchase' ? '<span class="badge badge-success">Purchase</span>' : '';
+    let actions = `<button class="btn-sm btn-info" onclick="viewCustomerHistory(${c.id})">History</button>`;
+    if (isMaint) {
+      if (c.issue_status !== 'Fixed') actions += `<button class="btn-sm btn-success" onclick="openMarkFixed(${c.maint_id})">Fix</button>`;
+      if (+c.balance_amount > 0) actions += `<button class="btn-sm btn-primary" onclick="openPaymentUpdate('${c.maint_id}','maintenance',${c.balance_amount})">Pay</button>`;
+      actions += `<button class="btn-sm btn-danger" onclick="deleteMaintenance(${c.maint_id})">Del</button>`;
+    } else if (c.cph_id) {
+      actions += `<button class="btn-sm btn-primary" onclick="addIssueFor(${c.cph_id})">Issue</button>`;
+      if (+c.balance_amount > 0) actions += `<button class="btn-sm btn-success" onclick="openPaymentUpdate('${c.cph_id}','purchase',${c.balance_amount})">Pay</button>`;
+    }
+    actions += `<button class="btn-sm btn-warning" onclick="editCustomer(${c.id},'${c.entry_type||''}',${c.maint_id||c.cph_id||'null'})">Edit</button>`;
+    actions += `<button class="btn-sm btn-danger" onclick="deleteCustomer(${c.id})">Del</button>`;
+    return `<div class="mobile-card">
+      <h4>${c.name} <small style="color:var(--text-muted)">${c.phone||''}</small></h4>
+      <p>${entryBadge} ${c.product_name||'-'} ${c.quantity?'| Qty: '+c.quantity:''}</p>
+      <p>Total: ${formatCurrency(c.total_amount)} | Paid: ${formatCurrency(c.amount_paid)} | <span style="color:var(--danger)">Due: ${formatCurrency(c.balance_amount)}</span></p>
+      <p>${c.payment_status?getStatusBadge(c.payment_status):''} ${c.issue_status?getStatusBadge(c.issue_status):''} ${c.entry_date?formatDate(c.entry_date):''}</p>
+      <p style="font-size:0.72rem;color:var(--text-muted)">Created: ${c.created_at?formatDate(c.created_at):'-'} | Modified: ${c.updated_at?formatDate(c.updated_at):'-'}</p>
+      <div class="card-actions">${actions}</div></div>`;
+  }).join('');
 }
 
 function applyCustomerFilters() {
@@ -819,14 +1394,14 @@ function applyCustomerFilters() {
       (c.product_name||'').toLowerCase().includes(search)
     );
   }
-  if (dateFrom) data = data.filter(c => c.purchased_on && c.purchased_on.split('T')[0] >= dateFrom);
-  if (dateTo) data = data.filter(c => c.purchased_on && c.purchased_on.split('T')[0] <= dateTo);
+  if (dateFrom) data = data.filter(c => c.entry_date && c.entry_date.split('T')[0] >= dateFrom);
+  if (dateTo) data = data.filter(c => c.entry_date && c.entry_date.split('T')[0] <= dateTo);
   if (product) data = data.filter(c => c.product_name === product);
   if (warranty === 'active') data = data.filter(c => c.warranty_end_date && new Date(c.warranty_end_date) >= new Date());
   if (warranty === 'expired') data = data.filter(c => c.warranty_end_date && new Date(c.warranty_end_date) < new Date());
   if (warranty === 'none') data = data.filter(c => !c.warranty_end_date);
-  if (payment === 'paid') data = data.filter(c => (+c.balance_amount || 0) === 0);
-  if (payment === 'pending') data = data.filter(c => (+c.balance_amount || 0) > 0);
+  if (payment === 'paid') data = data.filter(c => c.payment_status === 'Paid');
+  if (payment === 'pending') data = data.filter(c => c.payment_status === 'Pending' || c.payment_status === 'Partially Paid');
   if (paidVia) data = data.filter(c => c.paid_via === paidVia);
 
   renderCustomers(data);

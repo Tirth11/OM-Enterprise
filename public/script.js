@@ -3,7 +3,7 @@
 
 class SelfWeldApp {
   constructor() {
-    this.whatsappNumber = '919876543210';
+    this.whatsappNumber = '917038973721';
     this.businessName = 'AUM Enterprise';
     this.init();
   }
@@ -14,6 +14,7 @@ class SelfWeldApp {
     this.setupContactForm();
     this.setupScrollAnimations();
     this.setupSmoothScrolling();
+    this.loadAdminPhone();
   }
 
   setupNavigation() {
@@ -143,6 +144,21 @@ class SelfWeldApp {
       window.open(whatsappUrl, '_blank');
       form.reset();
     }, 1500);
+  }
+
+  async loadAdminPhone() {
+    try {
+      const res = await fetch('/api/admin-phone');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.phone) {
+          this.whatsappNumber = '91' + data.phone;
+          const formatted = '+91 ' + data.phone.replace(/(\d{5})(\d{5})/, '$1 $2');
+          document.querySelectorAll('.phone-link').forEach(el => { el.href = 'tel:+91' + data.phone; el.textContent = formatted; });
+          document.querySelectorAll('.phone-display').forEach(el => { el.textContent = formatted; });
+        }
+      }
+    } catch(e) {}
   }
 
   setupScrollAnimations() {

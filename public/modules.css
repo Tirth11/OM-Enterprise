@@ -84,4 +84,26 @@
   .mobile-cards { display: block; }
   .modal-box .form-row { grid-template-columns: 1fr; }
   .stats-row { grid-template-columns: 1fr 1fr; }
+  .entry-type-cards { grid-template-columns: 1fr; }
+  .charge-row .form-row { grid-template-columns: 1fr; }
+  .modal-actions { position: sticky; bottom: -1.5rem; background: #fff; padding: 1rem 0 0; border-top: 1px solid var(--border); }
 }
+
+/* Entry Type Selection */
+.entry-type-selection { padding: 1rem 0; }
+.entry-type-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.entry-type-card { border: 2px solid var(--border); border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+.entry-type-card:hover { border-color: var(--primary); background: rgba(37,99,235,0.03); transform: translateY(-2px); }
+.entry-type-card i { font-size: 2rem; color: var(--primary); margin-bottom: 0.75rem; display: block; }
+.entry-type-card h4 { margin-bottom: 0.3rem; font-size: 1rem; }
+.entry-type-card p { font-size: 0.8rem; color: var(--text-muted); }
+
+/* Charge Rows */
+.charge-row { background: var(--bg-tertiary); padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem; border: 1px solid var(--border); }
+.charge-row .form-row { grid-template-columns: 2fr 2fr 1fr auto; gap: 0.5rem; }
+.charge-row .form-group { margin-bottom: 0; }
+.charge-row label { font-size: 0.72rem; }
+
+/* Checkbox Label */
+.checkbox-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; }
+.checkbox-label input[type="checkbox"] { width: auto; margin: 0; }

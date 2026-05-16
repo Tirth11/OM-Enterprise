@@ -531,6 +531,15 @@ const moduleRoutes = require('./routes-modules');
 moduleRoutes.setPool(pool, USE_MOCK_DB);
 app.use('/api', moduleRoutes);
 
+// Public route to get admin phone for landing page
+app.get('/api/admin-phone', async (req, res) => {
+  try {
+    if (USE_MOCK_DB) return res.json({ phone: mockDB.admins[0]?.phone || '7038973721' });
+    const r = await pool.query('SELECT phone FROM admins WHERE is_active=true ORDER BY id LIMIT 1');
+    res.json({ phone: r.rows[0]?.phone || '7038973721' });
+  } catch(e) { res.json({ phone: '7038973721' }); }
+});
+
 // ============================================================================
 // SERVER
 // ============================================================================

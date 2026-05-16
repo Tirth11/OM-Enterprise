@@ -4,26 +4,36 @@ let pool = null, USE_MOCK = true;
 router.setPool = (p, m) => { pool = p; USE_MOCK = m; };
 const q = async (text, params) => USE_MOCK ? null : pool.query(text, params);
 
-let mock = { customers: [], products: [], cph: [], vsh: [], issues: [], itx: [], wal: [], categories: ['Welding Machine','Power Tools','Welding Rods','Welding Cables','Accessories'], brands: ['Esab','Ador','D&H Secheron','Bosch','Makita','Stanley'], nid: { c:1, p:1, h:1, v:1, i:1, t:1, w:1 } };
+let mock = { customers: [], products: [], cph: [], vsh: [], issues: [], itx: [], wal: [], maint: [], mcharges: [], timeline: [], categories: ['Welding Machine','Power Tools','Welding Rods','Welding Cables','Accessories'], brands: ['Esab','Ador','D&H Secheron','Bosch','Makita','Stanley'], nid: { c:1, p:1, h:1, v:1, i:1, t:1, w:1, m:1, mc:1, tl:1 } };
 
 // CUSTOMERS
 router.get('/customers', async (req, res) => {
   const { search } = req.query;
   if (!USE_MOCK) {
-    const s = search ? `%${search}%` : '%';
-    const r = await q(`SELECT c.id, c.name, c.phone, c.created_at, c.updated_at, h.id as cph_id, p.name as product_name, p.category, p.brand, h.quantity, h.selling_price_per_qty, h.total_amount, h.amount_paid, h.balance_amount, h.paid_via, h.purchased_on, h.warranty_available, h.warranty_end_date, h.payment_status, h.notes
-      FROM customers c LEFT JOIN customer_product_history h ON h.customer_id=c.id LEFT JOIN products p ON p.id=h.product_id
-      WHERE c.deleted_at IS NULL AND (c.name ILIKE $1 OR c.phone ILIKE $1) ORDER BY h.purchased_on DESC NULLS LAST, c.created_at DESC`, [s]);
-    return res.json(r.rows);
+    try {
+      const s = search ? `%${search}%` : '%';
+      const r1 = await q(`SELECT c.id, c.name, c.phone, c.created_at, c.updated_at, 'Product Purchase' as entry_type, h.id as cph_id, NULL as maint_id, p.name as product_name, p.category, p.brand, h.quantity, h.selling_price_per_qty, h.total_amount, h.amount_paid, h.balance_amount, h.paid_via, h.purchased_on as entry_date, h.warranty_available, h.warranty_end_date, h.payment_status, h.notes, NULL as issue_status, NULL as issue_description
+        FROM customers c JOIN customer_product_history h ON h.customer_id=c.id LEFT JOIN products p ON p.id=h.product_id
+        WHERE c.deleted_at IS NULL AND (c.name ILIKE $1 OR c.phone ILIKE $1)`, [s]);
+      let r2 = { rows: [] };
+      try { r2 = await q(`SELECT c.id, c.name, c.phone, c.created_at, c.updated_at, 'Maintenance Only' as entry_type, NULL as cph_id, m.id as maint_id, m.product_name, m.category, NULL as brand, NULL as quantity, NULL as selling_price_per_qty, m.total_charges as total_amount, m.amount_paid, m.balance_amount, m.paid_via, m.issue_datetime as entry_date, false as warranty_available, NULL as warranty_end_date, m.payment_status, m.notes, m.issue_status, m.issue_description
+        FROM customers c JOIN customer_maintenance m ON m.customer_id=c.id
+        WHERE c.deleted_at IS NULL AND (c.name ILIKE $1 OR c.phone ILIKE $1)`, [s]); } catch(e) {}
+      const combined = [...r1.rows, ...r2.rows].sort((a,b) => new Date(b.entry_date||b.created_at) - new Date(a.entry_date||a.created_at));
+      return res.json(combined);
+    } catch(e) { return res.status(500).json({ message: e.message }); }
   }
   let list = mock.customers.filter(c => !c.deleted_at);
   if (search) { const s = search.toLowerCase(); list = list.filter(c => c.name.toLowerCase().includes(s) || c.phone.includes(s)); }
   const result = [];
   for (const c of list) {
     const recs = mock.cph.filter(h => h.customer_id === c.id);
-    if (!recs.length) result.push({ ...c, product_name: '-', quantity: 0, purchased_on: null, warranty_end_date: null, payment_status: '-', total_amount: 0, amount_paid: 0, balance_amount: 0 });
-    else recs.forEach(r => { const p = mock.products.find(x => x.id === r.product_id); result.push({ ...c, cph_id: r.id, product_name: p ? p.name : '-', category: p ? p.category : '', brand: p ? p.brand : '', quantity: r.quantity, selling_price_per_qty: r.selling_price_per_qty, total_amount: r.total_amount, amount_paid: r.amount_paid, balance_amount: r.balance_amount, paid_via: r.paid_via, purchased_on: r.purchased_on, warranty_available: r.warranty_available, warranty_end_date: r.warranty_end_date, payment_status: r.payment_status, notes: r.notes, purchase_created_at: r.created_at }); });
+    const maints = mock.maint.filter(m => m.customer_id === c.id);
+    if (!recs.length && !maints.length) result.push({ ...c, entry_type: '-', product_name: '-', quantity: 0, entry_date: null, warranty_end_date: null, payment_status: '-', total_amount: 0, amount_paid: 0, balance_amount: 0, issue_status: null });
+    recs.forEach(r => { const p = mock.products.find(x => x.id === r.product_id); result.push({ ...c, entry_type: 'Product Purchase', cph_id: r.id, maint_id: null, product_name: p ? p.name : '-', category: p ? p.category : '', brand: p ? p.brand : '', quantity: r.quantity, selling_price_per_qty: r.selling_price_per_qty, total_amount: r.total_amount, amount_paid: r.amount_paid, balance_amount: r.balance_amount, paid_via: r.paid_via, entry_date: r.purchased_on, warranty_available: r.warranty_available, warranty_end_date: r.warranty_end_date, payment_status: r.payment_status, notes: r.notes, issue_status: null }); });
+    maints.forEach(m => { result.push({ ...c, entry_type: 'Maintenance Only', cph_id: null, maint_id: m.id, product_name: m.product_name, category: m.category, brand: null, quantity: null, selling_price_per_qty: null, total_amount: m.total_charges, amount_paid: m.amount_paid, balance_amount: m.balance_amount, paid_via: m.paid_via, entry_date: m.issue_datetime, warranty_available: false, warranty_end_date: null, payment_status: m.payment_status, notes: m.notes, issue_status: m.issue_status, issue_description: m.issue_description }); });
   }
+  result.sort((a,b) => new Date(b.entry_date||b.created_at) - new Date(a.entry_date||a.created_at));
   res.json(result);
 });
 
@@ -68,6 +78,7 @@ router.post('/customers', async (req, res) => {
       const newQty = pr.rows[0].current_quantity - qty;
       await q('UPDATE products SET current_quantity=$1, updated_at=NOW() WHERE id=$2', [newQty, product_id]);
       await q(`INSERT INTO inventory_transactions(product_id,transaction_type,quantity_out,balance_after,reference_type,notes) VALUES($1,'Customer Product Given/Sold',$2,$3,'customer_product_history',$4)`, [product_id, qty, newQty, 'Sold to '+name.trim()]);
+      await q('INSERT INTO customer_timeline(customer_id,entry_type,reference_id,reference_type,event_type,event_description) VALUES($1,$2,currval(pg_get_serial_sequence($$customer_product_history$$,$$id$$)),$3,$4,$5)', [custId, 'Product Purchase', 'customer_product_history', 'purchase_created', 'Product purchased: qty '+qty]);
     }
     return res.json({ message: 'Customer record saved', customer: { id: custId, name: name.trim(), phone: phone||'' } });
   }
@@ -93,6 +104,7 @@ router.post('/customers', async (req, res) => {
     mock.cph.push({ id: mock.nid.h++, customer_id: customer.id, product_id: +product_id, quantity: qty, purchased_on: purchaseTime, warranty_available: !!warranty_available, warranty_start_date: warranty_start_date||null, warranty_end_date: warranty_end_date||null, warranty_extended: false, extended_warranty_end_date: null, selling_price_per_qty: sp, total_amount: total, amount_paid: paid, balance_amount: balance, paid_via: paid_via||'', payment_status: status, notes: notes||'', created_at: new Date(), updated_at: new Date() });
     product.current_quantity -= qty;
     mock.itx.push({ id: mock.nid.t++, product_id: +product_id, transaction_type: 'Customer Product Given/Sold', quantity_in: 0, quantity_out: qty, balance_after: product.current_quantity, reference_type: 'customer_product_history', notes: 'Sold to '+name.trim(), created_at: new Date() });
+    mock.timeline.push({ id: mock.nid.tl++, customer_id: customer.id, entry_type: 'Product Purchase', reference_id: mock.nid.h-1, reference_type: 'customer_product_history', event_type: 'purchase_created', event_description: 'Product purchased: '+(mock.products.find(x=>x.id===+product_id)||{}).name+' (Qty: '+qty+')', created_at: new Date() });
   }
   res.json({ message: 'Customer record saved', customer });
 });
@@ -107,8 +119,22 @@ router.put('/customers/:id', async (req, res) => {
 });
 
 router.delete('/customers/:id', async (req, res) => {
-  if (!USE_MOCK) { await q('UPDATE customers SET deleted_at=NOW() WHERE id=$1', [req.params.id]); return res.json({ message: 'Deleted' }); }
-  const c = mock.customers.find(x => x.id === +req.params.id); if (c) c.deleted_at = new Date();
+  if (!USE_MOCK) {
+    await q('DELETE FROM maintenance_charges WHERE maintenance_id IN (SELECT id FROM customer_maintenance WHERE customer_id=$1)', [req.params.id]).catch(()=>{});
+    await q('DELETE FROM customer_maintenance WHERE customer_id=$1', [req.params.id]).catch(()=>{});
+    await q('DELETE FROM product_issues WHERE customer_product_history_id IN (SELECT id FROM customer_product_history WHERE customer_id=$1)', [req.params.id]).catch(()=>{});
+    await q('DELETE FROM customer_product_history WHERE customer_id=$1', [req.params.id]).catch(()=>{});
+    await q('DELETE FROM customer_timeline WHERE customer_id=$1', [req.params.id]).catch(()=>{});
+    await q('UPDATE customers SET deleted_at=NOW() WHERE id=$1', [req.params.id]);
+    return res.json({ message: 'Deleted' });
+  }
+  const id = +req.params.id;
+  mock.mcharges = mock.mcharges.filter(x => !mock.maint.find(m => m.id === x.maintenance_id && m.customer_id === id));
+  mock.maint = mock.maint.filter(x => x.customer_id !== id);
+  mock.issues = mock.issues.filter(x => !mock.cph.find(h => h.id === x.customer_product_history_id && h.customer_id === id));
+  mock.cph = mock.cph.filter(x => x.customer_id !== id);
+  mock.timeline = mock.timeline.filter(x => x.customer_id !== id);
+  const c = mock.customers.find(x => x.id === id); if (c) c.deleted_at = new Date();
   res.json({ message: 'Deleted' });
 });
 
@@ -331,17 +357,31 @@ router.post('/vendor-stock', async (req, res) => {
 router.get('/issues', async (req, res) => {
   const { customer_product_history_id, status } = req.query;
   if (!USE_MOCK) {
-    let sql = `SELECT i.*, c.name as customer_name, c.phone as customer_phone, p.name as product_name FROM product_issues i JOIN customer_product_history h ON h.id=i.customer_product_history_id JOIN customers c ON c.id=h.customer_id JOIN products p ON p.id=h.product_id WHERE 1=1`;
+    let sql = `SELECT i.id, i.issue_date, i.issue_description, i.issue_status, i.warranty_status_at_issue, i.charge_amount, i.amount_paid, i.balance_amount, i.payment_mode, i.fixed_datetime, i.fix_done_details, i.customer_product_history_id, 'product_issue' as source_type, c.name as customer_name, c.phone as customer_phone, p.name as product_name FROM product_issues i JOIN customer_product_history h ON h.id=i.customer_product_history_id JOIN customers c ON c.id=h.customer_id JOIN products p ON p.id=h.product_id WHERE 1=1`;
     const params = [];
     if (customer_product_history_id) { params.push(customer_product_history_id); sql += ` AND i.customer_product_history_id=$${params.length}`; }
     if (status) { params.push(status); sql += ` AND i.issue_status=$${params.length}`; }
     sql += ' ORDER BY i.issue_date DESC';
-    const r = await q(sql, params); return res.json(r.rows);
+    const r = await q(sql, params);
+    // Also get maintenance records
+    let mSql = `SELECT m.id, m.issue_datetime as issue_date, m.issue_description, m.issue_status, 'N/A' as warranty_status_at_issue, m.total_charges as charge_amount, m.amount_paid, m.balance_amount, m.paid_via as payment_mode, m.fixed_datetime, m.fix_done_details, NULL as customer_product_history_id, 'maintenance' as source_type, c.name as customer_name, c.phone as customer_phone, m.product_name FROM customer_maintenance m JOIN customers c ON c.id=m.customer_id WHERE 1=1`;
+    const mParams = [];
+    if (status) { mParams.push(status); mSql += ` AND m.issue_status=$${mParams.length}`; }
+    mSql += ' ORDER BY m.issue_datetime DESC';
+    let mr = { rows: [] };
+    try { mr = await q(mSql, mParams); } catch(e) {}
+    const combined = [...r.rows, ...mr.rows].sort((a,b) => new Date(b.issue_date||0) - new Date(a.issue_date||0));
+    return res.json(combined);
   }
   let list = mock.issues;
   if (customer_product_history_id) list = list.filter(i => i.customer_product_history_id === +customer_product_history_id);
   if (status) list = list.filter(i => i.issue_status === status);
-  res.json(list.map(i => { const h = mock.cph.find(x=>x.id===i.customer_product_history_id); const c = h?mock.customers.find(x=>x.id===h.customer_id):null; const p = h?mock.products.find(x=>x.id===h.product_id):null; return { ...i, customer_name:c?c.name:'-', customer_phone:c?c.phone:'-', product_name:p?p.name:'-' }; }).sort((a,b)=>new Date(b.issue_date)-new Date(a.issue_date)));
+  const productIssues = list.map(i => { const h = mock.cph.find(x=>x.id===i.customer_product_history_id); const c = h?mock.customers.find(x=>x.id===h.customer_id):null; const p = h?mock.products.find(x=>x.id===h.product_id):null; return { ...i, source_type:'product_issue', customer_name:c?c.name:'-', customer_phone:c?c.phone:'-', product_name:p?p.name:'-' }; });
+  let maintList = mock.maint;
+  if (status) maintList = maintList.filter(m => m.issue_status === status);
+  const maintIssues = maintList.map(m => { const c = mock.customers.find(x=>x.id===m.customer_id); return { id: m.id, issue_date: m.issue_datetime, issue_description: m.issue_description, issue_status: m.issue_status, warranty_status_at_issue: 'N/A', charge_amount: m.total_charges, amount_paid: m.amount_paid, balance_amount: m.balance_amount, payment_mode: m.paid_via, fixed_datetime: m.fixed_datetime, fix_done_details: m.fix_done_details, customer_product_history_id: null, source_type: 'maintenance', customer_name: c?c.name:'-', customer_phone: c?c.phone:'-', product_name: m.product_name }; });
+  const combined = [...productIssues, ...maintIssues].sort((a,b) => new Date(b.issue_date||0) - new Date(a.issue_date||0));
+  res.json(combined);
 });
 
 router.post('/issues', async (req, res) => {
@@ -377,14 +417,35 @@ router.put('/issues/:id/fix', async (req, res) => {
   res.json({ message: 'Issue marked as fixed', issue });
 });
 
+router.put('/issues/:id/payment', async (req, res) => {
+  const { amount_paid, paid_via } = req.body;
+  const paid = +amount_paid;
+  if (paid <= 0) return res.status(400).json({ message: 'Amount must be greater than 0' });
+  if (!paid_via) return res.status(400).json({ message: 'Paid Via required' });
+  if (!USE_MOCK) {
+    const i = await q('SELECT charge_amount, amount_paid FROM product_issues WHERE id=$1', [req.params.id]);
+    if (!i.rows.length) return res.status(404).json({ message: 'Not found' });
+    const newPaid = (+i.rows[0].amount_paid||0) + paid;
+    if (newPaid > (+i.rows[0].charge_amount||0)) return res.status(400).json({ message: 'Total paid cannot exceed charge amount' });
+    await q('UPDATE product_issues SET amount_paid=$1, balance_amount=$2, payment_mode=$3, payment_date=NOW(), updated_at=NOW() WHERE id=$4', [newPaid, (+i.rows[0].charge_amount||0)-newPaid, paid_via, req.params.id]);
+    return res.json({ message: 'Payment updated' });
+  }
+  const issue = mock.issues.find(i => i.id === +req.params.id);
+  if (!issue) return res.status(404).json({ message: 'Not found' });
+  const newPaid = (+issue.amount_paid||0) + paid;
+  if (newPaid > (+issue.charge_amount||0)) return res.status(400).json({ message: 'Total paid cannot exceed charge amount' });
+  issue.amount_paid = newPaid; issue.balance_amount = (+issue.charge_amount||0) - newPaid; issue.payment_mode = paid_via; issue.updated_at = new Date();
+  res.json({ message: 'Payment updated' });
+});
+
 router.put('/issues/:id', async (req, res) => {
   const { issue_status, issue_description, charges_applicable, charge_reason, charge_amount, amount_paid, balance_amount, payment_mode, final_notes } = req.body;
-  if (!USE_MOCK) { await q(`UPDATE product_issues SET issue_status=COALESCE($1,issue_status), issue_description=COALESCE($2,issue_description), charge_amount=COALESCE($3,charge_amount), amount_paid=COALESCE($4,amount_paid), balance_amount=COALESCE($5,balance_amount), updated_at=NOW() WHERE id=$6`, [issue_status, issue_description, charge_amount?+charge_amount:null, amount_paid?+amount_paid:null, balance_amount?+balance_amount:null, req.params.id]); return res.json({ message:'Updated' }); }
+  if (!USE_MOCK) { await q(`UPDATE product_issues SET issue_status=COALESCE($1,issue_status), issue_description=COALESCE($2,issue_description), charge_amount=COALESCE($3,charge_amount), amount_paid=COALESCE($4,amount_paid), balance_amount=COALESCE($5,balance_amount), payment_mode=COALESCE($6,payment_mode), updated_at=NOW() WHERE id=$7`, [issue_status, issue_description, charge_amount!=null?+charge_amount:null, amount_paid!=null?+amount_paid:null, balance_amount!=null?+balance_amount:null, payment_mode||null, req.params.id]); return res.json({ message:'Updated' }); }
   const issue = mock.issues.find(i => i.id === +req.params.id);
   if (!issue) return res.status(404).json({ message: 'Not found' });
   if (issue_status) issue.issue_status=issue_status; if (issue_description) issue.issue_description=issue_description;
   if (charge_amount!==undefined) issue.charge_amount=+charge_amount; if (amount_paid!==undefined) issue.amount_paid=+amount_paid;
-  if (balance_amount!==undefined) issue.balance_amount=+balance_amount; issue.updated_at=new Date();
+  if (balance_amount!==undefined) issue.balance_amount=+balance_amount; if (payment_mode) issue.payment_mode=payment_mode; issue.updated_at=new Date();
   res.json({ message:'Updated', issue });
 });
 
@@ -446,6 +507,157 @@ router.put('/customer-product/:id', async (req, res) => {
   if (payment_status) cph.payment_status=payment_status; if (amount_paid) cph.amount_paid=+amount_paid;
   if (notes) cph.notes=notes; cph.updated_at=new Date();
   res.json({ message:'Updated', record:cph });
+});
+
+// MAINTENANCE ONLY RECORDS
+router.post('/maintenance', async (req, res) => {
+  const { name, phone, category, product_name, issue_description, issue_datetime, issue_status, notes, charges_applicable, charges, amount_paid, paid_via, fixed_datetime, fix_done_details } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ message: 'Customer name required' });
+  if (/^\d+$/.test(name.trim())) return res.status(400).json({ message: 'Customer name cannot be only numbers' });
+  if (!phone || !/^\d{10}$/.test(phone)) return res.status(400).json({ message: 'Phone number must be 10 digits' });
+  if (!category) return res.status(400).json({ message: 'Category required' });
+  if (!product_name || !product_name.trim()) return res.status(400).json({ message: 'Product name required' });
+  if (!issue_description || !issue_description.trim()) return res.status(400).json({ message: 'Issue description required' });
+  const status = issue_status || 'Reported';
+  if (status === 'Fixed' && (!fix_done_details || !fix_done_details.trim())) return res.status(400).json({ message: 'Fix done details required when status is Fixed' });
+  if (status === 'Fixed' && fixed_datetime && issue_datetime && new Date(fixed_datetime) < new Date(issue_datetime)) return res.status(400).json({ message: 'Fixed date cannot be before issue date' });
+
+  let totalCharges = 0;
+  if (charges_applicable && charges && charges.length) {
+    for (const ch of charges) { if (!ch.price || +ch.price <= 0) return res.status(400).json({ message: 'Charge item price must be greater than 0' }); totalCharges += +ch.price; }
+  } else if (charges_applicable) return res.status(400).json({ message: 'At least one charge row required' });
+
+  const paid = +amount_paid || 0;
+  if (paid > totalCharges && totalCharges > 0) return res.status(400).json({ message: 'Amount paid cannot exceed total charges' });
+  if (paid > 0 && !paid_via) return res.status(400).json({ message: 'Paid Via required when amount paid > 0' });
+  const balance = totalCharges - paid;
+  const payStatus = totalCharges === 0 ? 'N/A' : paid >= totalCharges ? 'Paid' : paid > 0 ? 'Partially Paid' : 'Pending';
+
+  if (!USE_MOCK) {
+    let custId;
+    const cr = await q('SELECT id FROM customers WHERE phone=$1 AND deleted_at IS NULL', [phone]);
+    if (cr.rows.length) { custId = cr.rows[0].id; await q('UPDATE customers SET name=$1, updated_at=NOW() WHERE id=$2', [name.trim(), custId]); }
+    else { const ins = await q('INSERT INTO customers(name,phone) VALUES($1,$2) RETURNING id', [name.trim(), phone]); custId = ins.rows[0].id; }
+    const mr = await q(`INSERT INTO customer_maintenance(customer_id,category,product_name,issue_description,issue_datetime,issue_status,fixed_datetime,fix_done_details,charges_applicable,total_charges,amount_paid,balance_amount,paid_via,payment_status,notes) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING id`,
+      [custId, category, product_name.trim(), issue_description.trim(), issue_datetime||new Date(), status, status==='Fixed'?(fixed_datetime||new Date()):null, fix_done_details||'', !!charges_applicable, totalCharges, paid, balance, paid_via||'', payStatus, notes||'']);
+    if (charges_applicable && charges && charges.length) {
+      for (const ch of charges) await q('INSERT INTO maintenance_charges(maintenance_id,part_service_name,description,price) VALUES($1,$2,$3,$4)', [mr.rows[0].id, ch.name, ch.description||'', +ch.price]);
+    }
+    await q('INSERT INTO customer_timeline(customer_id,entry_type,reference_id,reference_type,event_type,event_description) VALUES($1,$2,$3,$4,$5,$6)', [custId, 'Maintenance Only', mr.rows[0].id, 'customer_maintenance', 'maintenance_created', 'Maintenance record created for '+product_name.trim()]);
+    return res.json({ message: 'Maintenance record saved', id: mr.rows[0].id });
+  }
+  // Mock
+  let customer = mock.customers.find(c => c.phone === phone && !c.deleted_at);
+  if (!customer) { customer = { id: mock.nid.c++, name: name.trim(), phone, created_at: new Date(), updated_at: new Date(), deleted_at: null }; mock.customers.push(customer); }
+  else { customer.name = name.trim(); customer.updated_at = new Date(); }
+  const maint = { id: mock.nid.m++, customer_id: customer.id, category, product_name: product_name.trim(), issue_description: issue_description.trim(), issue_datetime: issue_datetime||new Date().toISOString(), issue_status: status, fixed_datetime: status==='Fixed'?(fixed_datetime||new Date().toISOString()):null, fix_done_details: fix_done_details||'', charges_applicable: !!charges_applicable, total_charges: totalCharges, amount_paid: paid, balance_amount: balance, paid_via: paid_via||'', payment_status: payStatus, notes: notes||'', created_at: new Date(), updated_at: new Date() };
+  mock.maint.push(maint);
+  if (charges_applicable && charges && charges.length) {
+    charges.forEach(ch => mock.mcharges.push({ id: mock.nid.mc++, maintenance_id: maint.id, part_service_name: ch.name, description: ch.description||'', price: +ch.price, created_at: new Date() }));
+  }
+  mock.timeline.push({ id: mock.nid.tl++, customer_id: customer.id, entry_type: 'Maintenance Only', reference_id: maint.id, reference_type: 'customer_maintenance', event_type: 'maintenance_created', event_description: 'Maintenance record created for '+product_name.trim(), created_at: new Date() });
+  res.json({ message: 'Maintenance record saved', id: maint.id });
+});
+
+router.get('/maintenance/:id', async (req, res) => {
+  if (!USE_MOCK) {
+    const r = await q('SELECT m.*, c.name as customer_name, c.phone as customer_phone FROM customer_maintenance m JOIN customers c ON c.id=m.customer_id WHERE m.id=$1', [req.params.id]);
+    if (!r.rows.length) return res.status(404).json({ message: 'Not found' });
+    const charges = await q('SELECT * FROM maintenance_charges WHERE maintenance_id=$1', [req.params.id]);
+    r.rows[0].charges = charges.rows;
+    return res.json(r.rows[0]);
+  }
+  const m = mock.maint.find(x => x.id === +req.params.id);
+  if (!m) return res.status(404).json({ message: 'Not found' });
+  const c = mock.customers.find(x => x.id === m.customer_id);
+  const charges = mock.mcharges.filter(x => x.maintenance_id === m.id);
+  res.json({ ...m, customer_name: c?c.name:'-', customer_phone: c?c.phone:'-', charges });
+});
+
+router.put('/maintenance/:id/fix', async (req, res) => {
+  const { fixed_datetime, fix_done_details, issue_datetime } = req.body;
+  if (!fix_done_details || !fix_done_details.trim()) return res.status(400).json({ message: 'Fix done details required' });
+  if (fixed_datetime && issue_datetime && new Date(fixed_datetime) < new Date(issue_datetime)) return res.status(400).json({ message: 'Fixed date cannot be before issue date' });
+  if (!USE_MOCK) {
+    await q(`UPDATE customer_maintenance SET issue_status='Fixed', fixed_datetime=$1, fix_done_details=$2, updated_at=NOW() WHERE id=$3`, [fixed_datetime||new Date(), fix_done_details.trim(), req.params.id]);
+    const m = await q('SELECT customer_id, product_name FROM customer_maintenance WHERE id=$1', [req.params.id]);
+    if (m.rows.length) await q('INSERT INTO customer_timeline(customer_id,entry_type,reference_id,reference_type,event_type,event_description) VALUES($1,$2,$3,$4,$5,$6)', [m.rows[0].customer_id, 'Maintenance Only', +req.params.id, 'customer_maintenance', 'issue_fixed', 'Issue fixed for '+m.rows[0].product_name]);
+    return res.json({ message: 'Marked as fixed' });
+  }
+  const m = mock.maint.find(x => x.id === +req.params.id);
+  if (!m) return res.status(404).json({ message: 'Not found' });
+  m.issue_status = 'Fixed'; m.fixed_datetime = fixed_datetime||new Date().toISOString(); m.fix_done_details = fix_done_details.trim(); m.updated_at = new Date();
+  mock.timeline.push({ id: mock.nid.tl++, customer_id: m.customer_id, entry_type: 'Maintenance Only', reference_id: m.id, reference_type: 'customer_maintenance', event_type: 'issue_fixed', event_description: 'Issue fixed for '+m.product_name, created_at: new Date() });
+  res.json({ message: 'Marked as fixed' });
+});
+
+router.put('/maintenance/:id/payment', async (req, res) => {
+  const { amount_paid, paid_via } = req.body;
+  const paid = +amount_paid;
+  if (paid < 0) return res.status(400).json({ message: 'Amount cannot be negative' });
+  if (paid > 0 && !paid_via) return res.status(400).json({ message: 'Paid Via required when amount > 0' });
+  if (!USE_MOCK) {
+    const m = await q('SELECT total_charges, amount_paid, customer_id, product_name FROM customer_maintenance WHERE id=$1', [req.params.id]);
+    if (!m.rows.length) return res.status(404).json({ message: 'Not found' });
+    const newPaid = +m.rows[0].amount_paid + paid;
+    if (newPaid > +m.rows[0].total_charges) return res.status(400).json({ message: 'Total paid cannot exceed total charges' });
+    const balance = +m.rows[0].total_charges - newPaid;
+    const status = newPaid >= +m.rows[0].total_charges ? 'Paid' : newPaid > 0 ? 'Partially Paid' : 'Pending';
+    await q('UPDATE customer_maintenance SET amount_paid=$1, balance_amount=$2, paid_via=$3, payment_status=$4, updated_at=NOW() WHERE id=$5', [newPaid, balance, paid_via||'', status, req.params.id]);
+    await q('INSERT INTO customer_timeline(customer_id,entry_type,reference_id,reference_type,event_type,event_description) VALUES($1,$2,$3,$4,$5,$6)', [m.rows[0].customer_id, 'Maintenance Only', +req.params.id, 'customer_maintenance', 'payment_updated', 'Payment updated: ₹'+paid+' via '+(paid_via||'N/A')]);
+    return res.json({ message: 'Payment updated' });
+  }
+  const m = mock.maint.find(x => x.id === +req.params.id);
+  if (!m) return res.status(404).json({ message: 'Not found' });
+  const newPaid = m.amount_paid + paid;
+  if (newPaid > m.total_charges) return res.status(400).json({ message: 'Total paid cannot exceed total charges' });
+  m.amount_paid = newPaid; m.balance_amount = m.total_charges - newPaid; m.paid_via = paid_via||m.paid_via;
+  m.payment_status = newPaid >= m.total_charges ? 'Paid' : newPaid > 0 ? 'Partially Paid' : 'Pending'; m.updated_at = new Date();
+  mock.timeline.push({ id: mock.nid.tl++, customer_id: m.customer_id, entry_type: 'Maintenance Only', reference_id: m.id, reference_type: 'customer_maintenance', event_type: 'payment_updated', event_description: 'Payment updated: ₹'+paid+' via '+(paid_via||'N/A'), created_at: new Date() });
+  res.json({ message: 'Payment updated' });
+});
+
+router.delete('/maintenance/:id', async (req, res) => {
+  if (!USE_MOCK) { await q('DELETE FROM maintenance_charges WHERE maintenance_id=$1', [req.params.id]); await q('DELETE FROM customer_maintenance WHERE id=$1', [req.params.id]); return res.json({ message: 'Deleted' }); }
+  mock.mcharges = mock.mcharges.filter(x => x.maintenance_id !== +req.params.id);
+  mock.maint = mock.maint.filter(x => x.id !== +req.params.id);
+  res.json({ message: 'Deleted' });
+});
+
+// CUSTOMER PAYMENT UPDATE (for product purchase)
+router.put('/customer-product/:id/payment', async (req, res) => {
+  const { amount_paid, paid_via } = req.body;
+  const paid = +amount_paid;
+  if (paid < 0) return res.status(400).json({ message: 'Amount cannot be negative' });
+  if (paid > 0 && !paid_via) return res.status(400).json({ message: 'Paid Via required when amount > 0' });
+  if (!USE_MOCK) {
+    const h = await q('SELECT total_amount, amount_paid, customer_id FROM customer_product_history WHERE id=$1', [req.params.id]);
+    if (!h.rows.length) return res.status(404).json({ message: 'Not found' });
+    const newPaid = +h.rows[0].amount_paid + paid;
+    if (newPaid > +h.rows[0].total_amount) return res.status(400).json({ message: 'Total paid cannot exceed total amount' });
+    const balance = +h.rows[0].total_amount - newPaid;
+    const status = newPaid >= +h.rows[0].total_amount ? 'Paid' : newPaid > 0 ? 'Partially Paid' : 'Pending';
+    await q('UPDATE customer_product_history SET amount_paid=$1, balance_amount=$2, paid_via=$3, payment_status=$4, updated_at=NOW() WHERE id=$5', [newPaid, balance, paid_via||'', status, req.params.id]);
+    await q('INSERT INTO customer_timeline(customer_id,entry_type,reference_id,reference_type,event_type,event_description) VALUES($1,$2,$3,$4,$5,$6)', [h.rows[0].customer_id, 'Product Purchase', +req.params.id, 'customer_product_history', 'payment_updated', 'Payment updated: ₹'+paid+' via '+(paid_via||'N/A')]);
+    return res.json({ message: 'Payment updated' });
+  }
+  const h = mock.cph.find(x => x.id === +req.params.id);
+  if (!h) return res.status(404).json({ message: 'Not found' });
+  const newPaid = h.amount_paid + paid;
+  if (newPaid > h.total_amount) return res.status(400).json({ message: 'Total paid cannot exceed total amount' });
+  h.amount_paid = newPaid; h.balance_amount = h.total_amount - newPaid; h.paid_via = paid_via||h.paid_via;
+  h.payment_status = newPaid >= h.total_amount ? 'Paid' : newPaid > 0 ? 'Partially Paid' : 'Pending'; h.updated_at = new Date();
+  mock.timeline.push({ id: mock.nid.tl++, customer_id: h.customer_id, entry_type: 'Product Purchase', reference_id: h.id, reference_type: 'customer_product_history', event_type: 'payment_updated', event_description: 'Payment updated: ₹'+paid+' via '+(paid_via||'N/A'), created_at: new Date() });
+  res.json({ message: 'Payment updated' });
+});
+
+// CUSTOMER TIMELINE
+router.get('/customers/:id/timeline', async (req, res) => {
+  if (!USE_MOCK) {
+    const r = await q('SELECT * FROM customer_timeline WHERE customer_id=$1 ORDER BY created_at DESC', [req.params.id]);
+    return res.json(r.rows);
+  }
+  res.json(mock.timeline.filter(t => t.customer_id === +req.params.id).sort((a,b) => new Date(b.created_at)-new Date(a.created_at)));
 });
 
 module.exports = router;

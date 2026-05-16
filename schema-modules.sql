@@ -129,3 +129,47 @@ CREATE TABLE IF NOT EXISTS warranty_audit_logs (
   reason TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Maintenance Only Records
+CREATE TABLE IF NOT EXISTS customer_maintenance (
+  id SERIAL PRIMARY KEY,
+  customer_id INT REFERENCES customers(id),
+  category VARCHAR(100),
+  product_name VARCHAR(200),
+  issue_description TEXT NOT NULL,
+  issue_datetime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  issue_status VARCHAR(30) DEFAULT 'Reported',
+  fixed_datetime TIMESTAMP,
+  fix_done_details TEXT,
+  charges_applicable BOOLEAN DEFAULT false,
+  total_charges DECIMAL(10,2) DEFAULT 0,
+  amount_paid DECIMAL(10,2) DEFAULT 0,
+  balance_amount DECIMAL(10,2) DEFAULT 0,
+  paid_via VARCHAR(30) DEFAULT '',
+  payment_status VARCHAR(20) DEFAULT 'Pending',
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Maintenance Charge Rows
+CREATE TABLE IF NOT EXISTS maintenance_charges (
+  id SERIAL PRIMARY KEY,
+  maintenance_id INT REFERENCES customer_maintenance(id) ON DELETE CASCADE,
+  part_service_name VARCHAR(200) NOT NULL,
+  description TEXT,
+  price DECIMAL(10,2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Unified Customer Timeline
+CREATE TABLE IF NOT EXISTS customer_timeline (
+  id SERIAL PRIMARY KEY,
+  customer_id INT REFERENCES customers(id),
+  entry_type VARCHAR(50) NOT NULL,
+  reference_id INT,
+  reference_type VARCHAR(50),
+  event_type VARCHAR(100) NOT NULL,
+  event_description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

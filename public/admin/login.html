@@ -100,7 +100,11 @@
       loginBtn.disabled = false;
     }
 
-    if (localStorage.getItem('adminToken')) window.location.href = './dashboard.html';
+    if (localStorage.getItem('adminToken')) {
+      fetch('/api/auth/verify', { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('adminToken') } })
+        .then(r => { if (r.ok) window.location.href = './dashboard.html'; else { localStorage.removeItem('adminToken'); localStorage.removeItem('adminUser'); } })
+        .catch(() => {});
+    }
   </script>
 </body>
 </html>
