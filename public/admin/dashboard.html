@@ -150,7 +150,7 @@
             </div>
             <div class="module-table-wrap">
               <table class="module-table"><thead><tr>
-                <th>Name</th><th>Phone</th><th>Entry Type</th><th>Product</th><th>Qty</th><th>Total ₹</th><th>Paid ₹</th><th>Balance ₹</th><th>Payment</th><th>Issue Status</th><th>Date</th><th>Created</th><th>Modified</th><th>Actions</th>
+                <th>Name</th><th>Phone</th><th>Entry Type</th><th>Product</th><th>Qty</th><th>Total ₹</th><th>Paid ₹</th><th>Balance ₹</th><th>Payment</th><th>Issue Status</th><th>Created</th><th>Modified</th><th>Actions</th>
               </tr></thead><tbody id="customersTableBody"></tbody></table>
             </div>
             <div class="mobile-cards" id="customersCards"></div>
@@ -256,7 +256,7 @@
 
           <!-- PRODUCT PURCHASE FIELDS -->
           <div id="purchaseFields" style="display:none">
-            <div class="form-group"><label>Product Name *</label><select id="customerProductSelect" onchange="onProductSelected()" required><option value="">-- Select Product --</option></select></div>
+            <div class="form-group"><label>Product Name *</label><select id="customerProductSelect" onchange="onProductSelected()"><option value="">-- Select Product --</option></select></div>
             <div id="productDetailsPanel" style="display:none;background:var(--bg-tertiary);padding:0.75rem;border-radius:8px;margin-bottom:0.875rem;border:1px solid var(--border)">
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;font-size:0.8rem">
                 <div><strong>Category:</strong> <span id="custProdCategory">-</span></div>
@@ -268,7 +268,7 @@
               </div>
             </div>
             <div class="form-row">
-              <div class="form-group"><label>Quantity *</label><input type="number" id="custQuantity" min="1" required oninput="calcCustomerTotal()"></div>
+              <div class="form-group"><label>Quantity *</label><input type="number" id="custQuantity" min="1" oninput="calcCustomerTotal()"></div>
               <div class="form-group"><label>Selling Price / Qty (₹)</label><input type="number" id="custSellingPrice" step="0.01" readonly style="background:var(--bg-tertiary)" oninput="calcCustomerTotal()"></div>
             </div>
             <div class="form-row">
@@ -280,7 +280,7 @@
               <div class="form-group"><label>Paid Via</label><select id="custPaidVia"><option value="">-- Select --</option><option>Cash</option><option>UPI</option><option>PhonePe</option><option>Google Pay</option><option>Paytm</option><option>Card</option><option>Bank Transfer</option><option>Other</option></select></div>
             </div>
             <div class="form-row">
-              <div class="form-group"><label>Purchase Date & Time</label><input type="datetime-local" id="custPurchaseDate"></div>
+              <div class="form-group"><label>Purchase Date & Time</label><input type="datetime-local" id="custPurchaseDate" onchange="recalcWarrantyEnd()"></div>
               <div class="form-group"><label>Warranty End Date</label><input type="date" id="custWarrantyEnd" readonly style="background:var(--bg-tertiary)"></div>
             </div>
             <div class="form-group"><label>Notes</label><textarea id="custNotes" rows="2"></textarea></div>
@@ -292,7 +292,7 @@
               <div class="form-group"><label>Category *</label><select id="maintCategory" onchange="toggleMaintNewCategory()"><option value="">-- Select --</option></select><input type="text" id="maintNewCategory" placeholder="Enter new category" style="display:none;margin-top:0.4rem"></div>
               <div class="form-group"><label>Product Name *</label><select id="maintProductSelect" onchange="toggleMaintNewProduct()"><option value="">-- Select --</option></select><input type="text" id="maintNewProduct" placeholder="Enter product name" style="display:none;margin-top:0.4rem"></div>
             </div>
-            <div class="form-group"><label>Issue Description *</label><textarea id="maintIssueDesc" rows="3" required placeholder="Describe the issue in detail..."></textarea></div>
+            <div class="form-group"><label>Issue Description *</label><textarea id="maintIssueDesc" rows="3" placeholder="Describe the issue in detail..."></textarea></div>
             <div class="form-row">
               <div class="form-group"><label>Issue Date & Time</label><input type="datetime-local" id="maintIssueDate"></div>
               <div class="form-group"><label>Issue Status</label><select id="maintIssueStatus" onchange="toggleMaintFixFields()"><option>Reported</option><option>Checking</option><option>Repair In Progress</option><option>Fixed</option></select></div>

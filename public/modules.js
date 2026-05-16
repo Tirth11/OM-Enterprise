@@ -134,13 +134,27 @@ function onProductSelected() {
   document.getElementById('custQuantity').value = 1;
   if (p.warranty_available && p.warranty_period) {
     const months = parseInt(p.warranty_period) * (p.warranty_period.toLowerCase().includes('year') ? 12 : 1) || 12;
-    const start = new Date();
-    const end = new Date(); end.setMonth(end.getMonth() + months);
+    const purchaseDate = document.getElementById('custPurchaseDate').value;
+    const start = purchaseDate ? new Date(purchaseDate) : new Date();
+    const end = new Date(start); end.setMonth(end.getMonth() + months);
     document.getElementById('custWarrantyEnd').value = end.toISOString().split('T')[0];
   } else {
     document.getElementById('custWarrantyEnd').value = '';
   }
   calcCustomerTotal();
+}
+
+function recalcWarrantyEnd() {
+  const pid = document.getElementById('customerProductSelect').value;
+  if (!pid) return;
+  const p = allProducts.find(x => x.id === +pid);
+  if (!p || !p.warranty_available || !p.warranty_period) return;
+  const months = parseInt(p.warranty_period) * (p.warranty_period.toLowerCase().includes('year') ? 12 : 1) || 12;
+  const purchaseDate = document.getElementById('custPurchaseDate').value;
+  if (!purchaseDate) return;
+  const start = new Date(purchaseDate);
+  const end = new Date(start); end.setMonth(end.getMonth() + months);
+  document.getElementById('custWarrantyEnd').value = end.toISOString().split('T')[0];
 }
 
 async function loadProductDropdown() {
@@ -1318,7 +1332,7 @@ function renderCustomers(data) {
   const tbody = document.getElementById('customersTableBody');
   const cards = document.getElementById('customersCards');
   if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="14" class="empty-state"><i class="fas fa-users"></i><p>No customer records found</p></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="13" class="empty-state"><i class="fas fa-users"></i><p>No customer records found</p></td></tr>';
     cards.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><p>No customer records</p></div>';
     return;
   }
@@ -1331,18 +1345,21 @@ function renderCustomers(data) {
     if (isMaint) {
       if (c.issue_status !== 'Fixed') actions += `<button class="btn-sm btn-success" onclick="openMarkFixed(${c.maint_id})" title="Mark Fixed"><i class="fas fa-check"></i></button>`;
       if (+c.balance_amount > 0) actions += `<button class="btn-sm btn-primary" onclick="openPaymentUpdate('${c.maint_id}','maintenance',${c.balance_amount})" title="Update Payment"><i class="fas fa-rupee-sign"></i></button>`;
+      actions += `<button class="btn-sm btn-warning" onclick="editCustomer(${c.id},'${c.entry_type||''}',${c.maint_id||c.cph_id||'null'})" title="Edit"><i class="fas fa-edit"></i></button>`;
       actions += `<button class="btn-sm btn-danger" onclick="deleteMaintenance(${c.maint_id})" title="Delete"><i class="fas fa-trash"></i></button>`;
     } else if (c.cph_id) {
       actions += `<button class="btn-sm btn-primary" onclick="addIssueFor(${c.cph_id})" title="Add Issue"><i class="fas fa-tools"></i></button>`;
       if (+c.balance_amount > 0) actions += `<button class="btn-sm btn-success" onclick="openPaymentUpdate('${c.cph_id}','purchase',${c.balance_amount})" title="Update Payment"><i class="fas fa-rupee-sign"></i></button>`;
+      actions += `<button class="btn-sm btn-warning" onclick="editCustomer(${c.id},'${c.entry_type||''}',${c.maint_id||c.cph_id||'null'})" title="Edit"><i class="fas fa-edit"></i></button>`;
+      actions += `<button class="btn-sm btn-danger" onclick="deleteCustomer(${c.id})" title="Delete"><i class="fas fa-trash"></i></button>`;
+    } else {
+      actions += `<button class="btn-sm btn-warning" onclick="editCustomer(${c.id},'${c.entry_type||''}',${c.maint_id||c.cph_id||'null'})" title="Edit"><i class="fas fa-edit"></i></button>`;
+      actions += `<button class="btn-sm btn-danger" onclick="deleteCustomer(${c.id})" title="Delete"><i class="fas fa-trash"></i></button>`;
     }
-    actions += `<button class="btn-sm btn-warning" onclick="editCustomer(${c.id},'${c.entry_type||''}',${c.maint_id||c.cph_id||'null'})" title="Edit"><i class="fas fa-edit"></i></button>`;
-    actions += `<button class="btn-sm btn-danger" onclick="deleteCustomer(${c.id})" title="Delete"><i class="fas fa-trash"></i></button>`;
     return `<tr>
       <td>${c.name}</td><td>${c.phone||'-'}</td><td>${entryBadge}</td><td>${c.product_name||'-'}</td><td>${c.quantity||'-'}</td>
       <td>${formatCurrency(c.total_amount)}</td><td>${formatCurrency(c.amount_paid)}</td><td style="color:var(--danger)">${formatCurrency(c.balance_amount)}</td>
       <td>${payBadge}</td><td>${issueStatusBadge}</td>
-      <td>${c.entry_date?formatDate(c.entry_date):'-'}</td>
       <td>${c.created_at?formatDate(c.created_at):'-'}</td><td>${c.updated_at?formatDate(c.updated_at):'-'}</td>
       <td>${actions}</td></tr>`;
   }).join('');
@@ -1353,18 +1370,22 @@ function renderCustomers(data) {
     if (isMaint) {
       if (c.issue_status !== 'Fixed') actions += `<button class="btn-sm btn-success" onclick="openMarkFixed(${c.maint_id})">Fix</button>`;
       if (+c.balance_amount > 0) actions += `<button class="btn-sm btn-primary" onclick="openPaymentUpdate('${c.maint_id}','maintenance',${c.balance_amount})">Pay</button>`;
+      actions += `<button class="btn-sm btn-warning" onclick="editCustomer(${c.id},'${c.entry_type||''}',${c.maint_id||c.cph_id||'null'})">Edit</button>`;
       actions += `<button class="btn-sm btn-danger" onclick="deleteMaintenance(${c.maint_id})">Del</button>`;
     } else if (c.cph_id) {
       actions += `<button class="btn-sm btn-primary" onclick="addIssueFor(${c.cph_id})">Issue</button>`;
       if (+c.balance_amount > 0) actions += `<button class="btn-sm btn-success" onclick="openPaymentUpdate('${c.cph_id}','purchase',${c.balance_amount})">Pay</button>`;
+      actions += `<button class="btn-sm btn-warning" onclick="editCustomer(${c.id},'${c.entry_type||''}',${c.maint_id||c.cph_id||'null'})">Edit</button>`;
+      actions += `<button class="btn-sm btn-danger" onclick="deleteCustomer(${c.id})">Del</button>`;
+    } else {
+      actions += `<button class="btn-sm btn-warning" onclick="editCustomer(${c.id},'${c.entry_type||''}',${c.maint_id||c.cph_id||'null'})">Edit</button>`;
+      actions += `<button class="btn-sm btn-danger" onclick="deleteCustomer(${c.id})">Del</button>`;
     }
-    actions += `<button class="btn-sm btn-warning" onclick="editCustomer(${c.id},'${c.entry_type||''}',${c.maint_id||c.cph_id||'null'})">Edit</button>`;
-    actions += `<button class="btn-sm btn-danger" onclick="deleteCustomer(${c.id})">Del</button>`;
     return `<div class="mobile-card">
       <h4>${c.name} <small style="color:var(--text-muted)">${c.phone||''}</small></h4>
       <p>${entryBadge} ${c.product_name||'-'} ${c.quantity?'| Qty: '+c.quantity:''}</p>
       <p>Total: ${formatCurrency(c.total_amount)} | Paid: ${formatCurrency(c.amount_paid)} | <span style="color:var(--danger)">Due: ${formatCurrency(c.balance_amount)}</span></p>
-      <p>${c.payment_status?getStatusBadge(c.payment_status):''} ${c.issue_status?getStatusBadge(c.issue_status):''} ${c.entry_date?formatDate(c.entry_date):''}</p>
+      <p>${c.payment_status?getStatusBadge(c.payment_status):''} ${c.issue_status?getStatusBadge(c.issue_status):''}</p>
       <p style="font-size:0.72rem;color:var(--text-muted)">Created: ${c.created_at?formatDate(c.created_at):'-'} | Modified: ${c.updated_at?formatDate(c.updated_at):'-'}</p>
       <div class="card-actions">${actions}</div></div>`;
   }).join('');
