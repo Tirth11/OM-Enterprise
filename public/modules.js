@@ -106,20 +106,15 @@ function resetEntryType() {
 }
 
 async function loadProductCategoryDropdown() {
-  const cats = await api('/categories');
-  const sel = document.getElementById('custProdCategorySelect');
-  sel.innerHTML = '<option value="">-- Select Category --</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
   allProducts = await api('/products');
+  const sel = document.getElementById('customerProductSelect');
+  sel.innerHTML = '<option value="">-- Select Product --</option>' + allProducts.map(p =>
+    `<option value="${p.id}">${p.name} | ${p.brand||'-'} | Stock: ${p.current_quantity}</option>`
+  ).join('');
 }
 
 function onCategorySelected() {
-  const cat = document.getElementById('custProdCategorySelect').value;
-  const sel = document.getElementById('customerProductSelect');
-  const filtered = cat ? allProducts.filter(p => p.category === cat) : allProducts;
-  sel.innerHTML = '<option value="">-- Select Product --</option>' + filtered.map(p =>
-    `<option value="${p.id}">${p.name} | ${p.brand||'-'} | Stock: ${p.current_quantity}</option>`
-  ).join('');
-  document.getElementById('productDetailsPanel').style.display = 'none';
+  // No-op: category removed
 }
 
 function onProductSelected() {
@@ -319,7 +314,6 @@ async function saveCustomer() {
   if (entryType === 'purchase') {
     // Product Purchase validations
     const product_id = document.getElementById('customerProductSelect').value;
-    if (!document.getElementById('custProdCategorySelect').value) { showToast('Please select a product category'); return; }
     if (!product_id) { showToast('Please select a product'); return; }
     const qty = +document.getElementById('custQuantity').value;
     if (!qty || qty <= 0 || qty !== Math.floor(qty)) { showToast('Quantity must be a whole number > 0'); return; }
@@ -466,11 +460,10 @@ async function editCustomer(id, entryType, refId) {
     document.getElementById('customerFormId').value = id + '|purchase|' + refId;
     const h = await api('/customer-product/' + refId);
     await loadProductCategoryDropdown();
-    // Set category
-    const catSel = document.getElementById('custProdCategorySelect');
+    // Set product directly
     if (h.product_name) {
       const prod = allProducts.find(p => p.name === h.product_name);
-      if (prod) { catSel.value = prod.category || ''; onCategorySelected(); document.getElementById('customerProductSelect').value = prod.id; onProductSelected(); }
+      if (prod) { document.getElementById('customerProductSelect').value = prod.id; onProductSelected(); }
     }
     document.getElementById('custQuantity').value = h.quantity || 1;
     document.getElementById('custSellingPrice').value = h.selling_price_per_qty || '';
