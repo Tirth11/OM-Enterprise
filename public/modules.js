@@ -984,7 +984,24 @@ async function saveIssue() {
   const body = Object.fromEntries(fd.entries());
   body.charges_applicable = document.getElementById('issueChargesApplicable').checked;
   body.customer_product_history_id = body.cph_id;
-  if (body.charges_applicable && +body.amount_paid > +body.charge_amount) { showToast('Amount paid cannot exceed charge amount'); return; }
+
+  if (body.charges_applicable) {
+    let charges = [];
+    const rows = document.querySelectorAll('#issueChargeRows .charge-row');
+    if (!rows.length) { showToast('Add at least one charge row'); return; }
+    for (const row of rows) {
+      const name = row.querySelector('.charge-name').value.trim();
+      const price = +row.querySelector('.charge-price').value;
+      if (!name) { showToast('Charge item name required'); return; }
+      if (!price || price <= 0) { showToast('Charge price must be > 0'); return; }
+      charges.push({ name, description: row.querySelector('.charge-desc').value.trim(), price });
+    }
+    body.charges = charges;
+    body.charge_amount = charges.reduce((s, c) => s + c.price, 0);
+    const paid = +body.amount_paid || 0;
+    if (paid > body.charge_amount) { showToast('Amount paid cannot exceed total charges'); return; }
+  }
+
   await api('/issues', { method: 'POST', body: JSON.stringify(body) });
   hideModal('issueModal');
   loadCustomers();
@@ -996,11 +1013,69 @@ function toggleFixFields(status) {
 }
 
 function toggleChargeFields() {
-  document.getElementById('chargeFieldsGroup').style.display = document.getElementById('issueChargesApplicable').checked ? 'block' : 'none';
+  const show = document.getElementById('issueChargesApplicable').checked;
+  document.getElementById('chargeFieldsGroup').style.display = show ? 'block' : 'none';
+  if (show && !document.getElementById('issueChargeRows').children.length) addIssueChargeRow();
+}
+
+function addIssueChargeRow() {
+  const container = document.getElementById('issueChargeRows');
+  const row = document.createElement('div');
+  row.className = 'charge-row';
+  row.innerHTML = `<div class="form-row" style="align-items:end">
+    <div class="form-group"><label>Part/Service *</label><input type="text" class="charge-name" placeholder="Part or service name"></div>
+    <div class="form-group"><label>Description</label><input type="text" class="charge-desc" placeholder="Optional"></div>
+    <div class="form-group"><label>Price (₹) *</label><input type="number" class="charge-price" step="0.01" min="0.01" oninput="calcIssueTotal()"></div>
+    <button type="button" class="btn-sm btn-danger" onclick="this.closest('.charge-row').remove();calcIssueTotal()" style="margin-bottom:0.875rem;height:32px"><i class="fas fa-times"></i></button>
+  </div>`;
+  container.appendChild(row);
+}
+
+function calcIssueTotal() {
+  let total = 0;
+  document.querySelectorAll('#issueChargeRows .charge-price').forEach(p => total += +p.value || 0);
+  document.getElementById('issueTotalCharges').value = total ? '₹' + total.toLocaleString('en-IN') : '₹0';
+  calcIssueBalance();
+}
+
+function calcIssueBalance() {
+  let total = 0;
+  document.querySelectorAll('#issueChargeRows .charge-price').forEach(p => total += +p.value || 0);
+  const paid = +document.getElementById('issueAmountPaid').value || 0;
+  document.getElementById('issueBalanceDue').value = (total - paid) >= 0 ? '₹' + (total - paid).toLocaleString('en-IN') : '₹0';
 }
 
 function toggleFixChargeFields() {
-  document.getElementById('fixChargeFieldsGroup').style.display = document.getElementById('fixChargesApplicable').checked ? 'block' : 'none';
+  const show = document.getElementById('fixChargesApplicable').checked;
+  document.getElementById('fixChargeFieldsGroup').style.display = show ? 'block' : 'none';
+  if (show && !document.getElementById('fixChargeRows').children.length) addFixChargeRow();
+}
+
+function addFixChargeRow() {
+  const container = document.getElementById('fixChargeRows');
+  const row = document.createElement('div');
+  row.className = 'charge-row';
+  row.innerHTML = `<div class="form-row" style="align-items:end">
+    <div class="form-group"><label>Part/Service *</label><input type="text" class="charge-name" placeholder="Part or service name"></div>
+    <div class="form-group"><label>Description</label><input type="text" class="charge-desc" placeholder="Optional"></div>
+    <div class="form-group"><label>Price (₹) *</label><input type="number" class="charge-price" step="0.01" min="0.01" oninput="calcFixTotal()"></div>
+    <button type="button" class="btn-sm btn-danger" onclick="this.closest('.charge-row').remove();calcFixTotal()" style="margin-bottom:0.875rem;height:32px"><i class="fas fa-times"></i></button>
+  </div>`;
+  container.appendChild(row);
+}
+
+function calcFixTotal() {
+  let total = 0;
+  document.querySelectorAll('#fixChargeRows .charge-price').forEach(p => total += +p.value || 0);
+  document.getElementById('fixTotalCharges').value = total ? '₹' + total.toLocaleString('en-IN') : '₹0';
+  calcFixBalance();
+}
+
+function calcFixBalance() {
+  let total = 0;
+  document.querySelectorAll('#fixChargeRows .charge-price').forEach(p => total += +p.value || 0);
+  const paid = +document.getElementById('fixAmountPaid').value || 0;
+  document.getElementById('fixBalanceDue').value = (total - paid) >= 0 ? '₹' + (total - paid).toLocaleString('en-IN') : '₹0';
 }
 
 function openFixModal(issueId) {
@@ -1016,6 +1091,24 @@ async function saveFixIssue() {
   const body = Object.fromEntries(fd.entries());
   body.charges_applicable = document.getElementById('fixChargesApplicable').checked;
   body.returned_to_customer = document.getElementById('fixReturned').checked;
+
+  if (body.charges_applicable) {
+    let charges = [];
+    const rows = document.querySelectorAll('#fixChargeRows .charge-row');
+    if (!rows.length) { showToast('Add at least one charge row'); return; }
+    for (const row of rows) {
+      const name = row.querySelector('.charge-name').value.trim();
+      const price = +row.querySelector('.charge-price').value;
+      if (!name) { showToast('Charge item name required'); return; }
+      if (!price || price <= 0) { showToast('Charge price must be > 0'); return; }
+      charges.push({ name, description: row.querySelector('.charge-desc').value.trim(), price });
+    }
+    body.charges = charges;
+    body.charge_amount = charges.reduce((s, c) => s + c.price, 0);
+    const paid = +body.amount_paid || 0;
+    if (paid > body.charge_amount) { showToast('Amount paid cannot exceed total charges'); return; }
+  }
+
   const issueId = body.issue_id;
   delete body.issue_id;
   await api('/issues/' + issueId + '/fix', { method: 'PUT', body: JSON.stringify(body) });
