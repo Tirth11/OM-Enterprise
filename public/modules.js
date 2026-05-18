@@ -382,14 +382,11 @@ async function saveCustomer() {
     let charges = [];
     if (chargesApplicable) {
       const rows = document.querySelectorAll('#maintChargeRows .charge-row');
-      if (!rows.length) { showToast('At least one charge row required'); return; }
       for (const row of rows) {
         const cname = row.querySelector('.charge-name').value.trim();
         const cdesc = row.querySelector('.charge-desc').value.trim();
         const cprice = +row.querySelector('.charge-price').value;
-        if (!cname) { showToast('Charge item name required'); return; }
-        if (!cprice || cprice <= 0) { showToast('Charge item price must be greater than 0'); return; }
-        charges.push({ name: cname, description: cdesc, price: cprice });
+        if (cname && cprice > 0) charges.push({ name: cname, description: cdesc, price: cprice });
       }
     }
     const totalCharges = charges.reduce((s, c) => s + c.price, 0);
@@ -988,18 +985,15 @@ async function saveIssue() {
   if (body.charges_applicable) {
     let charges = [];
     const rows = document.querySelectorAll('#issueChargeRows .charge-row');
-    if (!rows.length) { showToast('Add at least one charge row'); return; }
     for (const row of rows) {
       const name = row.querySelector('.charge-name').value.trim();
       const price = +row.querySelector('.charge-price').value;
-      if (!name) { showToast('Charge item name required'); return; }
-      if (!price || price <= 0) { showToast('Charge price must be > 0'); return; }
-      charges.push({ name, description: row.querySelector('.charge-desc').value.trim(), price });
+      if (name && price > 0) charges.push({ name, description: row.querySelector('.charge-desc').value.trim(), price });
     }
     body.charges = charges;
     body.charge_amount = charges.reduce((s, c) => s + c.price, 0);
     const paid = +body.amount_paid || 0;
-    if (paid > body.charge_amount) { showToast('Amount paid cannot exceed total charges'); return; }
+    if (paid > body.charge_amount && body.charge_amount > 0) { showToast('Amount paid cannot exceed total charges'); return; }
   }
 
   await api('/issues', { method: 'POST', body: JSON.stringify(body) });

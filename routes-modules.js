@@ -524,8 +524,8 @@ router.post('/maintenance', async (req, res) => {
 
   let totalCharges = 0;
   if (charges_applicable && charges && charges.length) {
-    for (const ch of charges) { if (!ch.price || +ch.price <= 0) return res.status(400).json({ message: 'Charge item price must be greater than 0' }); totalCharges += +ch.price; }
-  } else if (charges_applicable) return res.status(400).json({ message: 'At least one charge row required' });
+    for (const ch of charges) { if (ch.price && +ch.price > 0) totalCharges += +ch.price; }
+  }
 
   const paid = +amount_paid || 0;
   if (paid > totalCharges && totalCharges > 0) return res.status(400).json({ message: 'Amount paid cannot exceed total charges' });
