@@ -31,7 +31,7 @@ async function seedAdmin() {
       await pool.query(
         `INSERT INTO admins (name, email, phone, password_hash, role, is_active)
          VALUES ($1, $2, $3, $4, $5, $6)`,
-        ['AUM Enterprise Admin', 'admin@aumenterprise.com', '7038973721', passwordHash, 'ADMIN', true]
+        ['AUM Enterprise Admin', 'aumenterprise33@gmail.com', '7038973721', passwordHash, 'ADMIN', true]
       );
       console.log('✓ Default admin created!');
     }

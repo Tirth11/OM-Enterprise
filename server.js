@@ -38,7 +38,7 @@ let mockDB = {
       {
         id: 1,
         name: 'AUM Enterprise Admin',
-        email: 'admin@aumenterprise.com',
+        email: 'aumenterprise33@gmail.com',
         phone: '7038973721',
         password_hash: defaultAdminPassword,
         role: 'ADMIN',
@@ -120,7 +120,7 @@ CREATE TABLE audit_logs (
 INSERT INTO admins (name, email, phone, password_hash, role, is_active)
 VALUES (
   'Self Weld Admin',
-  'admin@selfweldindustries.com',
+  'aumenterprise33@gmail.com',
   '91XXXXXXXXXX',
   '$2a$10$...hashed_password_here...',
   'ADMIN',

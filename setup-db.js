@@ -11,8 +11,8 @@ async function setup() {
   console.log('Tables created');
 
   const hash = await bcryptjs.hash('Admin@123456', 10);
-  await pool.query(`INSERT INTO admins(name,email,phone,password_hash,role,is_active) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(email) DO NOTHING`, ['Self Weld Admin','admin@selfweldindustries.com','919876543210',hash,'ADMIN',true]);
-  console.log('Admin seeded: admin@selfweldindustries.com / Admin@123456');
+  await pool.query(`INSERT INTO admins(name,email,phone,password_hash,role,is_active) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(email) DO NOTHING`, ['Self Weld Admin','aumenterprise33@gmail.com','7038973721',hash,'ADMIN',true]);
+  console.log('Admin seeded: aumenterprise33@gmail.com / Admin@123456');
   await pool.end();
 }
 setup().catch(e => { console.error(e.message); pool.end(); });
