@@ -3,7 +3,7 @@
 
 class SelfWeldApp {
   constructor() {
-    this.whatsappNumber = '917038973721';
+    this.whatsappNumber = '918275613310';
     this.businessName = 'AUM Enterprise';
     this.init();
   }
