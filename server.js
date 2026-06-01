@@ -39,7 +39,7 @@ let mockDB = {
         id: 1,
         name: 'AUM Enterprise Admin',
         email: 'aumenterprise33@gmail.com',
-        phone: '7038973721',
+        phone: '8275613310',
         password_hash: defaultAdminPassword,
         role: 'ADMIN',
         is_active: true,
@@ -49,7 +49,7 @@ let mockDB = {
       }
     ];
     console.log('✅ Mock database initialized with default admin');
-    console.log('📱 Phone: 7038973721');
+    console.log('📱 Phone: 8275613310');
     console.log('🔐 Password: adarsh@123');
   }
 })();
@@ -534,10 +534,10 @@ app.use('/api', moduleRoutes);
 // Public route to get admin phone for landing page
 app.get('/api/admin-phone', async (req, res) => {
   try {
-    if (USE_MOCK_DB) return res.json({ phone: mockDB.admins[0]?.phone || '7038973721' });
+    if (USE_MOCK_DB) return res.json({ phone: mockDB.admins[0]?.phone || '8275613310' });
     const r = await pool.query('SELECT phone FROM admins WHERE is_active=true ORDER BY id LIMIT 1');
-    res.json({ phone: r.rows[0]?.phone || '7038973721' });
-  } catch(e) { res.json({ phone: '7038973721' }); }
+    res.json({ phone: r.rows[0]?.phone || '8275613310' });
+  } catch(e) { res.json({ phone: '8275613310' }); }
 });
 
 // ============================================================================

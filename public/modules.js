@@ -33,11 +33,117 @@ function showConfirm(title, msg, onYes) {
 }
 
 // Loading state for save buttons
+let _saveInProgress = false;
+
 function setBtnLoading(btn, loading) {
   if (!btn) return;
-  if (loading) { btn.dataset.origText = btn.innerHTML; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Saving...'; btn.disabled = true; }
-  else { btn.innerHTML = btn.dataset.origText || 'Save'; btn.disabled = false; }
+  if (loading) {
+    btn.dataset.origText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Saving...';
+    btn.disabled = true;
+    btn.classList.add('btn-saving');
+    _saveInProgress = true;
+    // Show top progress bar
+    showSaveProgressBar();
+  } else {
+    btn.innerHTML = btn.dataset.origText || 'Save';
+    btn.disabled = false;
+    btn.classList.remove('btn-saving');
+    _saveInProgress = false;
+    hideSaveProgressBar();
+  }
 }
+
+function isSaveInProgress() {
+  return _saveInProgress;
+}
+
+function showSaveProgressBar() {
+  let bar = document.getElementById('saveProgressBar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'saveProgressBar';
+    bar.innerHTML = '<div class="save-progress-inner"></div>';
+    document.body.appendChild(bar);
+  }
+  bar.classList.add('active');
+}
+
+function hideSaveProgressBar() {
+  const bar = document.getElementById('saveProgressBar');
+  if (bar) {
+    bar.classList.add('complete');
+    setTimeout(() => {
+      bar.classList.remove('active', 'complete');
+    }, 400);
+  }
+}
+
+// Inject save progress bar styles
+(function injectSaveStyles() {
+  const style = document.createElement('style');
+  style.textContent = `
+    #saveProgressBar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      z-index: 99999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    #saveProgressBar.active {
+      opacity: 1;
+    }
+    #saveProgressBar.complete .save-progress-inner {
+      width: 100% !important;
+      transition: width 0.3s ease;
+    }
+    .save-progress-inner {
+      height: 100%;
+      background: linear-gradient(90deg, #2563eb, #7c3aed, #2563eb);
+      background-size: 200% 100%;
+      animation: saveProgressAnim 1.2s ease-in-out infinite, saveProgressWidth 2.5s ease-out forwards;
+      border-radius: 0 2px 2px 0;
+      box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
+    }
+    @keyframes saveProgressAnim {
+      0% { background-position: 0% 0%; }
+      100% { background-position: 200% 0%; }
+    }
+    @keyframes saveProgressWidth {
+      0% { width: 0%; }
+      20% { width: 25%; }
+      50% { width: 55%; }
+      80% { width: 80%; }
+      100% { width: 92%; }
+    }
+    .btn-saving {
+      position: relative;
+      cursor: not-allowed !important;
+      opacity: 0.85;
+      transform: scale(0.98);
+      transition: all 0.2s ease;
+    }
+    .btn-saving i {
+      margin-right: 6px;
+    }
+    .modal-actions .btn-save:not(:disabled):active {
+      transform: scale(0.96);
+    }
+    .save-success-flash {
+      animation: successFlash 0.6s ease;
+    }
+    @keyframes successFlash {
+      0% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(5, 150, 105, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); }
+    }
+  `;
+  document.head.appendChild(style);
+})();
 
 function formatDate(d) { return d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'; }
 function formatCurrency(n) { return '₹' + (+n || 0).toLocaleString('en-IN'); }
@@ -258,6 +364,7 @@ function calcCustomerBalance() {
 }
 
 async function saveCustomer() {
+  if (isSaveInProgress()) return; // Prevent double submission
   const saveBtn = document.querySelector('#customerForm .btn-save');
   const editId = document.getElementById('customerFormId').value;
   const name = document.getElementById('custName').value.trim();
@@ -273,53 +380,58 @@ async function saveCustomer() {
     const entryType = document.getElementById('customerEntryType').value;
     setBtnLoading(saveBtn, true);
 
-    if (entryType === 'edit-maintenance' && editId.includes('|maint|')) {
-      const [custId, , maintId] = editId.split('|');
-      await api('/customers/' + custId, { method: 'PUT', body: JSON.stringify({ name, phone }) });
-      // Rebuild maintenance data
-      let category = document.getElementById('maintCategory').value;
-      if (category === '__other__') category = document.getElementById('maintNewCategory').value.trim();
-      let product_name = document.getElementById('maintProductSelect').value;
-      if (product_name === '__other__') product_name = document.getElementById('maintNewProduct').value.trim();
-      const issueDesc = document.getElementById('maintIssueDesc').value.trim();
-      const issueStatus = document.getElementById('maintIssueStatus').value;
-      const chargesApplicable = document.getElementById('maintChargesApplicable').checked;
-      let charges = [];
-      if (chargesApplicable) {
-        document.querySelectorAll('#maintChargeRows .charge-row').forEach(row => {
-          charges.push({ name: row.querySelector('.charge-name').value.trim(), description: row.querySelector('.charge-desc').value.trim(), price: +row.querySelector('.charge-price').value });
-        });
+    try {
+      if (entryType === 'edit-maintenance' && editId.includes('|maint|')) {
+        const [custId, , maintId] = editId.split('|');
+        await api('/customers/' + custId, { method: 'PUT', body: JSON.stringify({ name, phone }) });
+        // Rebuild maintenance data
+        let category = document.getElementById('maintCategory').value;
+        if (category === '__other__') category = document.getElementById('maintNewCategory').value.trim();
+        let product_name = document.getElementById('maintProductSelect').value;
+        if (product_name === '__other__') product_name = document.getElementById('maintNewProduct').value.trim();
+        const issueDesc = document.getElementById('maintIssueDesc').value.trim();
+        const issueStatus = document.getElementById('maintIssueStatus').value;
+        const chargesApplicable = document.getElementById('maintChargesApplicable').checked;
+        let charges = [];
+        if (chargesApplicable) {
+          document.querySelectorAll('#maintChargeRows .charge-row').forEach(row => {
+            charges.push({ name: row.querySelector('.charge-name').value.trim(), description: row.querySelector('.charge-desc').value.trim(), price: +row.querySelector('.charge-price').value });
+          });
+        }
+        const totalCharges = charges.reduce((s, c) => s + c.price, 0);
+        const paid = +document.getElementById('maintAmountPaid').value || 0;
+        const paidVia = document.getElementById('maintPaidVia').value;
+        // Delete old and recreate
+        await api('/maintenance/' + maintId, { method: 'DELETE' });
+        await api('/maintenance', { method: 'POST', body: JSON.stringify({
+          name, phone, category, product_name, issue_description: issueDesc,
+          issue_datetime: document.getElementById('maintIssueDate').value,
+          issue_status: issueStatus, notes: document.getElementById('maintNotes').value,
+          charges_applicable: chargesApplicable, charges, amount_paid: paid, paid_via: paidVia,
+          fixed_datetime: issueStatus === 'Fixed' ? document.getElementById('maintFixedDate').value : null,
+          fix_done_details: issueStatus === 'Fixed' ? document.getElementById('maintFixDetails').value : ''
+        }) });
+      } else if (entryType === 'edit-purchase' && editId.includes('|purchase|')) {
+        const [custId, , cphId] = editId.split('|');
+        await api('/customers/' + custId, { method: 'PUT', body: JSON.stringify({ name, phone }) });
+        const paid = +document.getElementById('custAmountPaid').value || 0;
+        const paidVia = document.getElementById('custPaidVia').value;
+        await api('/customer-product/' + cphId, { method: 'PUT', body: JSON.stringify({
+          amount_paid: paid, payment_status: paid > 0 ? 'Partially Paid' : 'Pending',
+          notes: document.getElementById('custNotes').value
+        }) });
+      } else {
+        await api('/customers/' + editId, { method: 'PUT', body: JSON.stringify({ name, phone }) });
       }
-      const totalCharges = charges.reduce((s, c) => s + c.price, 0);
-      const paid = +document.getElementById('maintAmountPaid').value || 0;
-      const paidVia = document.getElementById('maintPaidVia').value;
-      // Delete old and recreate
-      await api('/maintenance/' + maintId, { method: 'DELETE' });
-      await api('/maintenance', { method: 'POST', body: JSON.stringify({
-        name, phone, category, product_name, issue_description: issueDesc,
-        issue_datetime: document.getElementById('maintIssueDate').value,
-        issue_status: issueStatus, notes: document.getElementById('maintNotes').value,
-        charges_applicable: chargesApplicable, charges, amount_paid: paid, paid_via: paidVia,
-        fixed_datetime: issueStatus === 'Fixed' ? document.getElementById('maintFixedDate').value : null,
-        fix_done_details: issueStatus === 'Fixed' ? document.getElementById('maintFixDetails').value : ''
-      }) });
-    } else if (entryType === 'edit-purchase' && editId.includes('|purchase|')) {
-      const [custId, , cphId] = editId.split('|');
-      await api('/customers/' + custId, { method: 'PUT', body: JSON.stringify({ name, phone }) });
-      const paid = +document.getElementById('custAmountPaid').value || 0;
-      const paidVia = document.getElementById('custPaidVia').value;
-      await api('/customer-product/' + cphId, { method: 'PUT', body: JSON.stringify({
-        amount_paid: paid, payment_status: paid > 0 ? 'Partially Paid' : 'Pending',
-        notes: document.getElementById('custNotes').value
-      }) });
-    } else {
-      await api('/customers/' + editId, { method: 'PUT', body: JSON.stringify({ name, phone }) });
-    }
 
-    setBtnLoading(saveBtn, false);
-    hideModal('customerModal');
-    loadCustomers();
-    showToast('Customer updated', 'success');
+      hideModal('customerModal');
+      loadCustomers();
+      showToast('Customer updated', 'success');
+    } catch(e) {
+      showToast('Failed to save. Please try again.');
+    } finally {
+      setBtnLoading(saveBtn, false);
+    }
     return;
   }
 
@@ -354,9 +466,15 @@ async function saveCustomer() {
       notes: document.getElementById('custNotes').value
     };
     setBtnLoading(saveBtn, true);
-    const res = await api('/customers', { method: 'POST', body: JSON.stringify(body) });
+    try {
+      const res = await api('/customers', { method: 'POST', body: JSON.stringify(body) });
+      if (res.message && !res.customer) { showToast(res.message); setBtnLoading(saveBtn, false); return; }
+    } catch(e) {
+      showToast('Failed to save. Please try again.');
+      setBtnLoading(saveBtn, false);
+      return;
+    }
     setBtnLoading(saveBtn, false);
-    if (res.message && !res.customer) { showToast(res.message); return; }
 
   } else if (entryType === 'maintenance') {
     // Maintenance validations
@@ -403,9 +521,15 @@ async function saveCustomer() {
       fixed_datetime: fixedDate, fix_done_details: fixDetails
     };
     setBtnLoading(saveBtn, true);
-    const res = await api('/maintenance', { method: 'POST', body: JSON.stringify(body) });
+    try {
+      const res = await api('/maintenance', { method: 'POST', body: JSON.stringify(body) });
+      if (res.message && !res.id) { showToast(res.message); setBtnLoading(saveBtn, false); return; }
+    } catch(e) {
+      showToast('Failed to save. Please try again.');
+      setBtnLoading(saveBtn, false);
+      return;
+    }
     setBtnLoading(saveBtn, false);
-    if (res.message && !res.id) { showToast(res.message); return; }
   }
 
   hideModal('customerModal');
@@ -631,6 +755,7 @@ async function openAddProductModal() {
 }
 
 async function saveProduct() {
+  if (isSaveInProgress()) return; // Prevent double submission
   const name = document.getElementById('prodName').value.trim();
   if (!name) { showToast('Product name is required'); return; }
   if (/^\d+$/.test(name)) { showToast('Product name cannot be only numbers'); return; }
@@ -661,13 +786,18 @@ async function saveProduct() {
 
   const saveBtn = document.querySelector('#productForm .btn-save');
   setBtnLoading(saveBtn, true);
-  const res = await api('/products', { method: 'POST', body: JSON.stringify(body) });
-  setBtnLoading(saveBtn, false);
-  if (res.message && !res.product) { showToast(res.message); return; }
-  hideModal('productModal');
-  loadProducts();
-  refreshDashboardCounts();
-  showToast('Product added', 'success');
+  try {
+    const res = await api('/products', { method: 'POST', body: JSON.stringify(body) });
+    if (res.message && !res.product) { showToast(res.message); setBtnLoading(saveBtn, false); return; }
+    hideModal('productModal');
+    loadProducts();
+    refreshDashboardCounts();
+    showToast('Product added', 'success');
+  } catch(e) {
+    showToast('Failed to save product. Please try again.');
+  } finally {
+    setBtnLoading(saveBtn, false);
+  }
 }
 
 async function editProduct(id) {
@@ -686,6 +816,7 @@ async function editProduct(id) {
 }
 
 async function saveEditProduct() {
+  if (isSaveInProgress()) return; // Prevent double submission
   const id = document.getElementById('editProductId').value;
   const name = document.getElementById('editProdName').value.trim();
   if (!name) { showToast('Product name is required'); return; }
@@ -709,10 +840,19 @@ async function saveEditProduct() {
 
   const body = { name, category, brand, selling_price: spq, warranty_available: warrantyAvail, warranty_period: warrantyPeriod, low_stock_quantity: +document.getElementById('editProdLowStock').value || 5, notes: document.getElementById('editProdNotes').value };
 
-  await api('/products/' + id, { method: 'PUT', body: JSON.stringify(body) });
-  hideModal('editProductModal');
-  loadProducts();
-  refreshDashboardCounts();
+  const saveBtn = document.querySelector('#editProductForm .btn-save');
+  setBtnLoading(saveBtn, true);
+  try {
+    await api('/products/' + id, { method: 'PUT', body: JSON.stringify(body) });
+    hideModal('editProductModal');
+    loadProducts();
+    refreshDashboardCounts();
+    showToast('Product updated', 'success');
+  } catch(e) {
+    showToast('Failed to update product');
+  } finally {
+    setBtnLoading(saveBtn, false);
+  }
 }
 
 async function deleteProduct(id) {
@@ -741,6 +881,7 @@ async function openAddInventoryModal(productId) {
 }
 
 async function saveAddInventory() {
+  if (isSaveInProgress()) return; // Prevent double submission
   const id = document.getElementById('addInvProductId').value;
   const ppq = +document.getElementById('addInvPurchasePrice').value;
   const qty = +document.getElementById('addInvQuantity').value;
@@ -752,13 +893,18 @@ async function saveAddInventory() {
   const body = { purchase_price_per_qty: ppq, total_quantity: qty, selling_price_per_qty: spq, notes: document.getElementById('addInvNotes').value };
   const saveBtn = document.querySelector('#addInventoryForm .btn-save');
   setBtnLoading(saveBtn, true);
-  const res = await api('/products/' + id + '/add-inventory', { method: 'POST', body: JSON.stringify(body) });
-  setBtnLoading(saveBtn, false);
-  if (res.message && res.message.includes('must be')) { showToast(res.message); return; }
-  hideModal('addInventoryModal');
-  loadProducts();
-  refreshDashboardCounts();
-  showToast('Inventory added', 'success');
+  try {
+    const res = await api('/products/' + id + '/add-inventory', { method: 'POST', body: JSON.stringify(body) });
+    if (res.message && res.message.includes('must be')) { showToast(res.message); setBtnLoading(saveBtn, false); return; }
+    hideModal('addInventoryModal');
+    loadProducts();
+    refreshDashboardCounts();
+    showToast('Inventory added', 'success');
+  } catch(e) {
+    showToast('Failed to add inventory. Please try again.');
+  } finally {
+    setBtnLoading(saveBtn, false);
+  }
 }
 
 async function viewProductHistory(productId) {
@@ -970,6 +1116,7 @@ function addIssueFor(cphId) {
 }
 
 async function saveIssue() {
+  if (isSaveInProgress()) return; // Prevent double submission
   const desc = document.getElementById('issueForm').querySelector('[name="issue_description"]').value.trim();
   if (!desc || desc.length < 5) { showToast('Issue description required (min 5 chars)'); return; }
   const status = document.getElementById('issueForm').querySelector('[name="issue_status"]').value;
@@ -996,10 +1143,19 @@ async function saveIssue() {
     if (paid > body.charge_amount && body.charge_amount > 0) { showToast('Amount paid cannot exceed total charges'); return; }
   }
 
-  await api('/issues', { method: 'POST', body: JSON.stringify(body) });
-  hideModal('issueModal');
-  loadCustomers();
-  refreshDashboardCounts();
+  const saveBtn = document.querySelector('#issueForm .btn-save') || document.querySelector('#issueModal .btn-save');
+  setBtnLoading(saveBtn, true);
+  try {
+    await api('/issues', { method: 'POST', body: JSON.stringify(body) });
+    hideModal('issueModal');
+    loadCustomers();
+    refreshDashboardCounts();
+    showToast('Issue saved', 'success');
+  } catch(e) {
+    showToast('Failed to save issue');
+  } finally {
+    setBtnLoading(saveBtn, false);
+  }
 }
 
 function toggleFixFields(status) {
@@ -1180,6 +1336,7 @@ async function editWarranty(cphId) {
 }
 
 async function saveWarranty() {
+  if (isSaveInProgress()) return; // Prevent double submission
   const form = document.getElementById('warrantyForm');
   const fd = new FormData(form);
   const body = Object.fromEntries(fd.entries());
@@ -1187,9 +1344,18 @@ async function saveWarranty() {
   body.warranty_extended = document.getElementById('warExtended').checked;
   const cphId = body.cph_id;
   delete body.cph_id;
-  await api('/customer-product/' + cphId + '/warranty', { method: 'PUT', body: JSON.stringify(body) });
-  hideModal('warrantyModal');
-  loadCustomers();
+  const saveBtn = document.querySelector('#warrantyModal .btn-save');
+  setBtnLoading(saveBtn, true);
+  try {
+    await api('/customer-product/' + cphId + '/warranty', { method: 'PUT', body: JSON.stringify(body) });
+    hideModal('warrantyModal');
+    loadCustomers();
+    showToast('Warranty updated', 'success');
+  } catch(e) {
+    showToast('Failed to update warranty');
+  } finally {
+    setBtnLoading(saveBtn, false);
+  }
 }
 
 // Product Detail with Timeline
@@ -1325,6 +1491,7 @@ function openPaymentUpdate(refId, refType, balance) {
 }
 
 async function savePaymentUpdate() {
+  if (isSaveInProgress()) return; // Prevent double submission
   const refId = document.getElementById('payRefId').value;
   const refType = document.getElementById('payRefType').value;
   const amount = +document.getElementById('payAmount').value;
@@ -1335,12 +1502,20 @@ async function savePaymentUpdate() {
   if (refType === 'maintenance') endpoint = '/maintenance/' + refId + '/payment';
   else if (refType === 'issue') endpoint = '/issues/' + refId + '/payment';
   else endpoint = '/customer-product/' + refId + '/payment';
-  const res = await api(endpoint, { method: 'PUT', body: JSON.stringify({ amount_paid: amount, paid_via: paidVia }) });
-  if (res.message && res.message.includes('cannot')) { showToast(res.message); return; }
-  hideModal('paymentModal');
-  loadCustomers();
-  loadIssues();
-  showToast('Payment updated', 'success');
+  const saveBtn = document.querySelector('#paymentModal .btn-save');
+  setBtnLoading(saveBtn, true);
+  try {
+    const res = await api(endpoint, { method: 'PUT', body: JSON.stringify({ amount_paid: amount, paid_via: paidVia }) });
+    if (res.message && res.message.includes('cannot')) { showToast(res.message); return; }
+    hideModal('paymentModal');
+    loadCustomers();
+    loadIssues();
+    showToast('Payment updated', 'success');
+  } catch(e) {
+    showToast('Failed to update payment');
+  } finally {
+    setBtnLoading(saveBtn, false);
+  }
 }
 
 function openMarkFixed(maintId) {
@@ -1351,16 +1526,25 @@ function openMarkFixed(maintId) {
 }
 
 async function saveMarkFixed() {
+  if (isSaveInProgress()) return; // Prevent double submission
   const maintId = document.getElementById('fixMaintId').value;
   const fixedDate = document.getElementById('fixMaintDate').value;
   const fixDetails = document.getElementById('fixMaintDetails').value.trim();
   if (!fixedDate) { showToast('Fixed date required'); return; }
   if (!fixDetails) { showToast('Fix done details required'); return; }
-  const res = await api('/maintenance/' + maintId + '/fix', { method: 'PUT', body: JSON.stringify({ fixed_datetime: fixedDate, fix_done_details: fixDetails }) });
-  if (res.message && res.message.includes('cannot')) { showToast(res.message); return; }
-  hideModal('markFixedModal');
-  loadCustomers();
-  showToast('Issue marked as fixed', 'success');
+  const saveBtn = document.querySelector('#markFixedModal .btn-save');
+  setBtnLoading(saveBtn, true);
+  try {
+    const res = await api('/maintenance/' + maintId + '/fix', { method: 'PUT', body: JSON.stringify({ fixed_datetime: fixedDate, fix_done_details: fixDetails }) });
+    if (res.message && res.message.includes('cannot')) { showToast(res.message); return; }
+    hideModal('markFixedModal');
+    loadCustomers();
+    showToast('Issue marked as fixed', 'success');
+  } catch(e) {
+    showToast('Failed to mark as fixed');
+  } finally {
+    setBtnLoading(saveBtn, false);
+  }
 }
 
 function deleteMaintenance(id) {

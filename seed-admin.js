@@ -17,27 +17,27 @@ async function seedAdmin() {
     // Check if admin already exists
     const check = await pool.query(
       'SELECT id FROM admins WHERE phone = $1',
-      ['7038973721']
+      ['8275613310']
     );
 
     if (check.rows[0]) {
       // Update existing admin password
       await pool.query(
         'UPDATE admins SET password_hash = $1, name = $2, is_active = true WHERE phone = $3',
-        [passwordHash, 'AUM Enterprise Admin', '7038973721']
+        [passwordHash, 'AUM Enterprise Admin', '8275613310']
       );
       console.log('✓ Admin password updated!');
     } else {
       await pool.query(
         `INSERT INTO admins (name, email, phone, password_hash, role, is_active)
          VALUES ($1, $2, $3, $4, $5, $6)`,
-        ['AUM Enterprise Admin', 'aumenterprise33@gmail.com', '7038973721', passwordHash, 'ADMIN', true]
+        ['AUM Enterprise Admin', 'aumenterprise33@gmail.com', '8275613310', passwordHash, 'ADMIN', true]
       );
       console.log('✓ Default admin created!');
     }
 
     console.log('\nAdmin Credentials:');
-    console.log('Phone: 7038973721');
+    console.log('Phone: 8275613310');
     console.log('Password: adarsh@123');
     process.exit(0);
   } catch (err) {
