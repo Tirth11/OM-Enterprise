@@ -126,10 +126,8 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
 // Public route for landing page phone
 app.get('/api/admin-phone', async (req, res) => {
-  try {
-    const r = await pool.query('SELECT phone FROM admins WHERE is_active=true ORDER BY id LIMIT 1');
-    res.json({ phone: r.rows[0]?.phone || '8275613310' });
-  } catch(e) { res.json({ phone: '8275613310' }); }
+  // Always return the business contact number
+  res.json({ phone: '8275613310' });
 });
 
 // MODULE ROUTES
