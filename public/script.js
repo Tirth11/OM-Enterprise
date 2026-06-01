@@ -147,18 +147,12 @@ class SelfWeldApp {
   }
 
   async loadAdminPhone() {
-    try {
-      const res = await fetch('/api/admin-phone');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.phone) {
-          this.whatsappNumber = '91' + data.phone;
-          const formatted = '+91 ' + data.phone.replace(/(\d{5})(\d{5})/, '$1 $2');
-          document.querySelectorAll('.phone-link').forEach(el => { el.href = 'tel:+91' + data.phone; el.textContent = formatted; });
-          document.querySelectorAll('.phone-display').forEach(el => { el.textContent = formatted; });
-        }
-      }
-    } catch(e) {}
+    // Always use the business phone number 8275613310
+    const phone = '8275613310';
+    this.whatsappNumber = '91' + phone;
+    const formatted = '+91 ' + phone.replace(/(\d{5})(\d{5})/, '$1 $2');
+    document.querySelectorAll('.phone-link').forEach(el => { el.href = 'tel:+91' + phone; el.textContent = formatted; });
+    document.querySelectorAll('.phone-display').forEach(el => { el.textContent = formatted; });
   }
 
   setupScrollAnimations() {
