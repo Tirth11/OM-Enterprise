@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Welding cable coil with connector">
+  <defs>
+    <linearGradient id="cRub" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d4855"/><stop offset=".35" stop-color="#1b222a"/><stop offset="1" stop-color="#070a0d"/>
+    </linearGradient>
+    <linearGradient id="cRubB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4d81bd"/><stop offset=".4" stop-color="#1d4675"/><stop offset="1" stop-color="#0a1c30"/>
+    </linearGradient>
+    <linearGradient id="cRubR" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c9534c"/><stop offset=".4" stop-color="#8a2723"/><stop offset="1" stop-color="#3b0e0c"/>
+    </linearGradient>
+    <linearGradient id="cChrome" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".3" stop-color="#c5ced9"/>
+      <stop offset=".62" stop-color="#69737f"/><stop offset="1" stop-color="#3c444e"/>
+    </linearGradient>
+    <linearGradient id="cCopper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd4a8"/><stop offset=".4" stop-color="#c8752e"/><stop offset="1" stop-color="#753d0e"/>
+    </linearGradient>
+    <radialGradient id="cGlow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#2a6fb5" stop-opacity=".3"/><stop offset="1" stop-color="#2a6fb5" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cShadow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#000" stop-opacity=".5"/><stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <circle cx="400" cy="300" r="290" fill="url(#cGlow)"/>
+  <ellipse cx="400" cy="500" rx="250" ry="38" fill="url(#cShadow)"/>
+
+  <g transform="translate(400 288)">
+    <!-- coil rings, back to front -->
+    <g fill="none" stroke-linecap="round">
+      <ellipse cx="0" cy="-46" rx="192" ry="98" stroke="url(#cRub)" stroke-width="42"/>
+      <ellipse cx="0" cy="-46" rx="192" ry="98" stroke="#5a6674" stroke-width="4" opacity=".35"/>
+
+      <ellipse cx="6" cy="-14" rx="200" ry="102" stroke="url(#cRubB)" stroke-width="44"/>
+      <ellipse cx="6" cy="-14" rx="200" ry="102" stroke="#8fbde9" stroke-width="4" opacity=".3"/>
+
+      <ellipse cx="-4" cy="22" rx="194" ry="100" stroke="url(#cRub)" stroke-width="44"/>
+      <ellipse cx="-4" cy="22" rx="194" ry="100" stroke="#5a6674" stroke-width="4" opacity=".3"/>
+
+      <ellipse cx="4" cy="58" rx="186" ry="96" stroke="url(#cRubR)" stroke-width="42"/>
+      <ellipse cx="4" cy="58" rx="186" ry="96" stroke="#e3877f" stroke-width="4" opacity=".28"/>
+    </g>
+
+    <!-- free end running out to a connector -->
+    <path d="M-186 60 C-270 96 -286 154 -232 190" fill="none" stroke="#070a0d" stroke-width="46" stroke-linecap="round"/>
+    <path d="M-186 60 C-270 96 -286 154 -232 190" fill="none" stroke="url(#cRub)" stroke-width="40" stroke-linecap="round"/>
+    <path d="M-192 46 C-272 84 -288 148 -238 182" fill="none" stroke="#6f7a88" stroke-width="3" opacity=".4"/>
+
+    <!-- dinse connector -->
+    <g transform="rotate(28 -212 196)">
+      <rect x="-248" y="170" width="74" height="54" rx="18" fill="#11171e"/>
+      <rect x="-248" y="170" width="74" height="20" rx="10" fill="#fff" opacity=".07"/>
+      <rect x="-182" y="176" width="70" height="42" rx="13" fill="url(#cChrome)"/>
+      <rect x="-182" y="176" width="70" height="14" rx="7" fill="#fff" opacity=".4"/>
+      <rect x="-118" y="184" width="42" height="26" rx="12" fill="url(#cCopper)"/>
+      <rect x="-118" y="184" width="42" height="9" rx="4" fill="#ffe1c2" opacity=".5"/>
+    </g>
+  </g>
+</svg>

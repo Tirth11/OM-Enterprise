@@ -1,9 +1,9 @@
 /* AUM Enterprise Dashboard - Beautiful Modern Theme */
 :root {
-  --primary: #2563eb;
-  --primary-dark: #1d4ed8;
-  --primary-light: #dbeafe;
-  --secondary: #7c3aed;
+  --primary: #990a0a;
+  --primary-dark: #800505;
+  --primary-light: #ffe5e5;
+  --secondary: #cca300;
   --success: #059669;
   --success-light: #d1fae5;
   --warning: #d97706;
@@ -13,8 +13,8 @@
   --info: #0891b2;
   --info-light: #cffafe;
   --teal: #0d9488;
-  --orange: #ea580c;
-  --purple: #7c3aed;
+  --orange: #ffd700;
+  --purple: #cca300;
 
   --bg-primary: #f8fafc;
   --bg-secondary: #ffffff;

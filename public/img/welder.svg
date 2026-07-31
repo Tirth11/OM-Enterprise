@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Inverter welding machine">
+  <defs>
+    <linearGradient id="wFront" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2c3540"/><stop offset=".45" stop-color="#1a2029"/><stop offset="1" stop-color="#0f141a"/>
+    </linearGradient>
+    <linearGradient id="wTop" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4a5563"/><stop offset="1" stop-color="#2a323c"/>
+    </linearGradient>
+    <linearGradient id="wSide" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#161c23"/><stop offset="1" stop-color="#0a0e12"/>
+    </linearGradient>
+    <linearGradient id="wPanel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4801f"/><stop offset="1" stop-color="#c85f0d"/>
+    </linearGradient>
+    <linearGradient id="wSteel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f0f4f8"/><stop offset=".5" stop-color="#aab4c0"/><stop offset="1" stop-color="#6b7481"/>
+    </linearGradient>
+    <radialGradient id="wScreen" cx=".5" cy=".3" r=".9">
+      <stop offset="0" stop-color="#0f2a33"/><stop offset="1" stop-color="#04121a"/>
+    </radialGradient>
+    <radialGradient id="wGlow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#4aa8e8" stop-opacity=".45"/><stop offset="1" stop-color="#4aa8e8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="wShadow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#000" stop-opacity=".55"/><stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <ellipse cx="400" cy="510" rx="270" ry="42" fill="url(#wShadow)"/>
+  <circle cx="400" cy="300" r="290" fill="url(#wGlow)"/>
+
+  <!-- carry handle -->
+  <path d="M225 155 q175 -95 350 0" fill="none" stroke="#0d1116" stroke-width="26" stroke-linecap="round"/>
+  <path d="M225 155 q175 -95 350 0" fill="none" stroke="#39424f" stroke-width="16" stroke-linecap="round"/>
+  <path d="M240 148 q160 -82 320 0" fill="none" stroke="#5d6875" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+
+  <!-- body: top / side / front -->
+  <path d="M150 205 L230 152 L650 152 L570 205 Z" fill="url(#wTop)"/>
+  <path d="M570 205 L650 152 L650 415 L570 468 Z" fill="url(#wSide)"/>
+  <rect x="150" y="205" width="420" height="263" rx="10" fill="url(#wFront)"/>
+  <rect x="150" y="205" width="420" height="263" rx="10" fill="none" stroke="#4b5663" stroke-width="1.5" opacity=".7"/>
+
+  <!-- side vent slats -->
+  <g stroke="#000" stroke-opacity=".55" stroke-width="6" stroke-linecap="round">
+    <path d="M592 245 L634 218"/><path d="M592 275 L634 248"/><path d="M592 305 L634 278"/>
+    <path d="M592 335 L634 308"/><path d="M592 365 L634 338"/><path d="M592 395 L634 368"/>
+  </g>
+
+  <!-- orange accent band -->
+  <rect x="150" y="205" width="420" height="16" rx="8" fill="url(#wPanel)" opacity=".95"/>
+  <rect x="150" y="446" width="420" height="22" rx="10" fill="#0a0e12"/>
+
+  <!-- control panel -->
+  <rect x="186" y="248" width="348" height="126" rx="12" fill="#0d1219" stroke="#333d49" stroke-width="1.5"/>
+
+  <!-- digital display -->
+  <rect x="206" y="266" width="150" height="90" rx="8" fill="url(#wScreen)" stroke="#1d3b47" stroke-width="2"/>
+  <text x="281" y="330" font-family="'SF Mono','Menlo',monospace" font-size="52" font-weight="700"
+        fill="#7fdcff" text-anchor="middle" letter-spacing="2">180</text>
+  <text x="281" y="349" font-family="Inter,sans-serif" font-size="13" fill="#3f8ba8" text-anchor="middle" letter-spacing="3">AMPERE</text>
+
+  <!-- control knob -->
+  <circle cx="428" cy="311" r="46" fill="#0b0f14"/>
+  <circle cx="428" cy="311" r="40" fill="url(#wSteel)"/>
+  <circle cx="428" cy="311" r="30" fill="#1a212a"/>
+  <circle cx="428" cy="308" r="30" fill="none" stroke="#59636f" stroke-width="1.5"/>
+  <rect x="425" y="285" width="6" height="18" rx="3" fill="#f4801f"/>
+  <g stroke="#6f7986" stroke-width="2" stroke-linecap="round">
+    <path d="M392 342 l-8 8"/><path d="M464 342 l8 8"/><path d="M428 261 v-10"/>
+  </g>
+
+  <!-- indicator LEDs -->
+  <circle cx="496" cy="286" r="7" fill="#3ddc84"/><circle cx="496" cy="286" r="12" fill="#3ddc84" opacity=".18"/>
+  <circle cx="496" cy="316" r="7" fill="#f4801f"/><circle cx="496" cy="316" r="12" fill="#f4801f" opacity=".18"/>
+  <circle cx="496" cy="346" r="7" fill="#2c3540"/>
+
+  <!-- dinse output sockets -->
+  <g>
+    <circle cx="248" cy="412" r="27" fill="#080b0f"/>
+    <circle cx="248" cy="412" r="21" fill="#c2352f"/>
+    <circle cx="248" cy="412" r="12" fill="#12171d"/>
+    <circle cx="248" cy="405" r="21" fill="none" stroke="#ff6b62" stroke-width="1.5" opacity=".5"/>
+  </g>
+  <g>
+    <circle cx="330" cy="412" r="27" fill="#080b0f"/>
+    <circle cx="330" cy="412" r="21" fill="#1f4f8a"/>
+    <circle cx="330" cy="412" r="12" fill="#12171d"/>
+    <circle cx="330" cy="405" r="21" fill="none" stroke="#5ca7f0" stroke-width="1.5" opacity=".5"/>
+  </g>
+
+  <text x="470" y="418" font-family="Inter,sans-serif" font-size="17" font-weight="700"
+        fill="#7c8794" letter-spacing="4" text-anchor="middle">AUM</text>
+
+  <!-- specular sweep -->
+  <path d="M150 205 L570 205 L570 250 L150 300 Z" fill="#fff" opacity=".045"/>
+</svg>

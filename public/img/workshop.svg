@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Welding workshop atmosphere">
+  <defs>
+    <linearGradient id="wsSky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a0f16"/><stop offset=".5" stop-color="#0d1620"/><stop offset="1" stop-color="#070a0e"/>
+    </linearGradient>
+    <radialGradient id="wsArc" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".95"/>
+      <stop offset=".12" stop-color="#cfefff" stop-opacity=".8"/>
+      <stop offset=".34" stop-color="#4aa8e8" stop-opacity=".38"/>
+      <stop offset=".66" stop-color="#1d5b96" stop-opacity=".14"/>
+      <stop offset="1" stop-color="#0d2a48" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="wsWarm" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#f4801f" stop-opacity=".32"/><stop offset="1" stop-color="#f4801f" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="wsFloor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#141c25"/><stop offset="1" stop-color="#05080b"/>
+    </linearGradient>
+    <linearGradient id="wsBeam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7fdcff" stop-opacity=".16"/><stop offset="1" stop-color="#7fdcff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="wsSteel" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1a222b"/><stop offset=".5" stop-color="#39434f"/><stop offset="1" stop-color="#141a21"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#wsSky)"/>
+
+  <!-- distant shop grid -->
+  <g stroke="#22303e" stroke-width="1.5" opacity=".5">
+    <path d="M0 300 h1600"/><path d="M0 380 h1600"/><path d="M0 452 h1600"/>
+    <path d="M180 240 v320"/><path d="M470 220 v340"/><path d="M760 210 v350"/>
+    <path d="M1050 220 v340"/><path d="M1340 240 v320"/>
+  </g>
+
+  <!-- roof trusses -->
+  <g stroke="#2c3a49" stroke-width="6" opacity=".55" fill="none">
+    <path d="M0 150 L400 60 L800 150 L1200 60 L1600 150"/>
+    <path d="M0 200 L400 110 L800 200 L1200 110 L1600 200"/>
+    <path d="M400 60 v50"/><path d="M800 150 v50"/><path d="M1200 60 v50"/>
+  </g>
+
+  <!-- light beams -->
+  <path d="M300 0 L420 0 L640 900 L360 900 Z" fill="url(#wsBeam)"/>
+  <path d="M1120 0 L1240 0 L1360 900 L1080 900 Z" fill="url(#wsBeam)"/>
+
+  <!-- floor -->
+  <rect y="560" width="1600" height="340" fill="url(#wsFloor)"/>
+  <g stroke="#1d2833" stroke-width="2" opacity=".6">
+    <path d="M0 620 h1600"/><path d="M0 700 h1600"/><path d="M0 800 h1600"/>
+  </g>
+
+  <!-- workbench -->
+  <rect x="420" y="548" width="760" height="26" rx="6" fill="url(#wsSteel)"/>
+  <rect x="470" y="574" width="26" height="150" fill="#141a21"/>
+  <rect x="1104" y="574" width="26" height="150" fill="#141a21"/>
+
+  <!-- steel plate being welded -->
+  <path d="M640 500 L1000 500 L1020 548 L620 548 Z" fill="#232d38"/>
+  <path d="M640 500 L1000 500 L1004 512 L636 512 Z" fill="#3b4855"/>
+
+  <!-- weld arc -->
+  <circle cx="820" cy="500" r="360" fill="url(#wsArc)"/>
+  <circle cx="820" cy="500" r="200" fill="url(#wsWarm)"/>
+  <circle cx="820" cy="500" r="16" fill="#ffffff"/>
+  <circle cx="820" cy="500" r="34" fill="#cfefff" opacity=".55"/>
+
+  <!-- weld bead trail -->
+  <path d="M660 528 q80 -18 158 -26" fill="none" stroke="#ff9d3f" stroke-width="7" stroke-linecap="round" opacity=".55"/>
+  <path d="M660 528 q80 -18 158 -26" fill="none" stroke="#ffe0b0" stroke-width="3" stroke-linecap="round" opacity=".5"/>
+
+  <!-- spark spray -->
+  <g stroke="#ffc46b" stroke-linecap="round" opacity=".75">
+    <path d="M820 500 L960 588" stroke-width="3"/>
+    <path d="M820 500 L1010 542" stroke-width="2.5"/>
+    <path d="M820 500 L940 640" stroke-width="2"/>
+    <path d="M820 500 L676 592" stroke-width="3"/>
+    <path d="M820 500 L622 546" stroke-width="2.5"/>
+    <path d="M820 500 L700 646" stroke-width="2"/>
+    <path d="M820 500 L866 356" stroke-width="2"/>
+    <path d="M820 500 L742 372" stroke-width="1.8"/>
+  </g>
+  <g fill="#ffd79a">
+    <circle cx="984" cy="604" r="4"/><circle cx="1042" cy="536" r="3"/><circle cx="956" cy="668" r="3.5"/>
+    <circle cx="648" cy="606" r="4"/><circle cx="586" cy="548" r="3"/><circle cx="682" cy="676" r="3.5"/>
+    <circle cx="876" cy="332" r="2.5"/><circle cx="728" cy="348" r="2.5"/><circle cx="1090" cy="614" r="2.5"/>
+    <circle cx="540" cy="628" r="2.5"/>
+  </g>
+
+  <!-- vignette -->
+  <rect width="1600" height="900" fill="none"/>
+  <path d="M0 0 h1600 v900 h-1600 z" fill="url(#wsVig)"/>
+  <defs>
+    <radialGradient id="wsVig" cx=".5" cy=".55" r=".78">
+      <stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".72"/>
+    </radialGradient>
+  </defs>
+</svg>

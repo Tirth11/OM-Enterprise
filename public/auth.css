@@ -1,7 +1,7 @@
 :root {
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --secondary: #7c3aed;
+  --primary: #990a0a;
+  --primary-hover: #800505;
+  --secondary: #cca300;
   --text: #1e293b;
   --text-secondary: #475569;
   --text-muted: #64748b;
@@ -10,8 +10,8 @@
   --card: #ffffff;
   --success: #059669;
   --error: #dc2626;
-  --gradient-primary: linear-gradient(135deg, #2563eb, #7c3aed);
-  --gradient-secondary: linear-gradient(135deg, #7c3aed, #ec4899);
+  --gradient-primary: linear-gradient(135deg, #990a0a, #cca300);
+  --gradient-secondary: linear-gradient(135deg, #cca300, #ffd700);
   --shadow: 0 4px 12px rgba(0,0,0,0.08);
   --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
 }
@@ -32,7 +32,7 @@ html, body {
   justify-content: center;
   min-height: 100vh;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #fff7ed 100%);
+  background: linear-gradient(135deg, #fdfbf7 0%, #f5f2eb 50%, #eae5d9 100%);
 }
 
 .auth-wrapper {

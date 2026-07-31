@@ -2,338 +2,466 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AUM Enterprise | Power Tools & Welding Solutions</title>
-  <meta name="description" content="AUM Enterprise in Sangli offers welding machines, rods, wires, cables, power tools, and industrial welding accessories.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#08090b">
+  <title>AUM Enterprise — Welding Machines & Safety Equipment, Sangli</title>
+  <meta name="description" content="AUM Enterprise, Patel Chowk, Sangli. Welding machines, helmets and safety gear, electrodes, cables, torches and power tools — genuine products with expert guidance since 1996.">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="AUM Enterprise — Welding Machines & Safety Equipment">
+  <meta property="og:description" content="Welding machines, safety gear, electrodes, cables and power tools. Patel Chowk, Sangli. Since 1996.">
+  <meta property="og:image" content="img/logo-mark.png">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" type="image/png" href="img/logo-mark.png">
+  <link rel="apple-touch-icon" href="img/logo-mark.png">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="header">
-    <div class="container nav-wrap">
-      <a href="#home" class="logo">
-        <i class="fas fa-tools"></i>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <!-- ══════════════ ICON SPRITE ══════════════ -->
+  <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-wa" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.64.08-.3-.15-1.26-.46-2.39-1.48-.89-.79-1.48-1.76-1.66-2.06-.17-.3-.02-.46.13-.6.14-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.61-.91-2.2-.25-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.03 1.02-1.03 2.48s1.06 2.88 1.21 3.07c.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.69.62.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2-1.42.25-.69.25-1.29.18-1.41-.08-.12-.27-.2-.57-.35M12.05 21.8h-.01a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.74.98 1-3.65-.24-.37a9.86 9.86 0 0 1-1.51-5.26c0-5.45 4.44-9.89 9.89-9.89 2.64 0 5.12 1.03 6.99 2.9a9.83 9.83 0 0 1 2.89 6.99c0 5.45-4.43 9.89-9.88 9.89m8.41-18.3A11.82 11.82 0 0 0 12.05 0C5.5 0 .16 5.34.16 11.89c0 2.1.55 4.14 1.59 5.95L.06 24l6.3-1.65a11.88 11.88 0 0 0 5.69 1.45c6.55 0 11.89-5.34 11.89-11.9a11.82 11.82 0 0 0-3.48-8.4"/>
+    </symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-chev-d" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 9 7 7 7-7"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.7 10.6a15.4 15.4 0 0 0 6.7 6.7l2.1-2.1a1.2 1.2 0 0 1 1.2-.3c1.2.4 2.4.6 3.7.6.7 0 1.2.5 1.2 1.2v3.3c0 .7-.5 1.2-1.2 1.2A17.6 17.6 0 0 1 2.8 3.6c0-.7.5-1.2 1.2-1.2h3.3c.7 0 1.2.5 1.2 1.2 0 1.3.2 2.5.6 3.7.1.4 0 .9-.3 1.2z"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="m3.5 7.5 8.5 6 8.5-6"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-6.3 7-11.2A7 7 0 0 0 5 10.8C5 15.7 12 22 12 22Z"/><circle cx="12" cy="10.5" r="2.6"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12.5c0 3.9-3.8 7-8.5 7-1 0-2-.1-2.9-.4L4 21l1.4-3.6A6.9 6.9 0 0 1 3.5 12.5c0-3.9 3.8-7 8.5-7s8.5 3.1 8.5 7Z"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 20 5.4v5.8c0 4.7-3.3 8.8-8 10.3-4.7-1.5-8-5.6-8-10.3V5.4Z"/><path d="m8.8 11.8 2.3 2.3 4.1-4.5"/></symbol>
+    <symbol id="i-wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3.4a5.5 5.5 0 0 0-6.6 7.2L3 16.2a2.2 2.2 0 0 0 3.1 3.1l5.6-5.6a5.5 5.5 0 0 0 7.2-6.6l-3 3-2.7-2.7Z"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5h11v9h-11z"/><path d="M13.5 10h3.6l3.4 3.2v2.3h-7z"/><circle cx="7" cy="17.5" r="2"/><circle cx="17.5" cy="17.5" r="2"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/></symbol>
+    <symbol id="i-check-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="m8 12.3 2.7 2.7L16.2 9"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="M12 7.6v5.2"/><path d="M12 16.4h.01"/></symbol>
+  </svg>
+
+  <!-- ══════════════ NAV ══════════════ -->
+  <header class="nav" id="nav">
+    <div class="nav__inner">
+      <a href="#top" class="nav__brand">
+        <img src="img/logo-mark.png" alt="" width="28" height="32" class="nav__mark">
         <span>AUM Enterprise</span>
       </a>
-      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-      <nav class="nav" id="navMenu">
-        <a href="#home" class="nav-link">Home</a>
-        <a href="#about" class="nav-link">About</a>
-        <a href="#products" class="nav-link">Products</a>
-        <a href="#services" class="nav-link">Services</a>
-        <a href="#contact" class="nav-link">Contact</a>
+
+      <nav class="nav__links" aria-label="Primary">
+        <a href="#products">Products</a>
+        <a href="#machines">Machines</a>
+        <a href="#safety">Safety</a>
+        <a href="#services">Services</a>
+        <a href="#visit">Visit</a>
       </nav>
+
+      <div class="nav__actions">
+        <a class="nav__cta wa-link" href="#">
+          <svg class="ico"><use href="#i-wa"/></svg><span>Get a quote</span>
+        </a>
+        <button class="nav__burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="drawer">
+          <span></span><span></span>
+        </button>
+      </div>
     </div>
   </header>
 
-  <main>
-    <section class="hero" id="home">
-      <div class="hero-background">
-        <div class="hero-pattern"></div>
+  <div class="drawer" id="drawer" hidden>
+    <nav class="drawer__links" aria-label="Mobile">
+      <a href="#products">Products</a>
+      <a href="#machines">Machines</a>
+      <a href="#safety">Safety</a>
+      <a href="#services">Services</a>
+      <a href="#visit">Visit</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div class="drawer__foot">
+      <a class="btn btn--fill wa-link" href="#"><svg class="ico"><use href="#i-wa"/></svg><span>WhatsApp us</span></a>
+      <a class="btn btn--ghost phone-link" href="tel:+918275613310">+91 82756 13310</a>
+    </div>
+  </div>
+
+  <main id="main">
+    <!-- ══════════════ HERO ══════════════ -->
+    <section class="hero" id="top">
+      <div class="hero__bg" data-parallax="0.28">
+        <img src="img/workshop.svg" alt="" aria-hidden="true">
       </div>
-      <div class="container hero-grid">
-        <div class="hero-content">
-          <div class="badge">
-            <i class="fas fa-calendar-alt"></i>
-            <span>Established 1996 • Sangli</span>
-          </div>
-          <h1 class="hero-title">
-            Professional 
-            <span class="gradient-text">Welding & Power Tools</span>
-            in Sangli
-          </h1>
-          <p class="hero-text">
-            AUM Enterprise is your trusted partner for welding machines, power tools, and industrial equipment. 
-            Quality products with expert guidance since 1996.
+      <div class="hero__embers" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+
+      <div class="hero__body">
+        <p class="eyebrow reveal">Sangli · Since 1996</p>
+        <h1 class="hero__title reveal" data-delay="1">
+          Strike the arc.<br>
+          <em>We'll handle the rest.</em>
+        </h1>
+        <p class="hero__sub reveal" data-delay="2">
+          Welding machines, safety gear, consumables and power tools —
+          picked by people who have been on the shop floor for three decades.
+        </p>
+        <div class="hero__links reveal" data-delay="3">
+          <a class="link-cta" href="#products">Explore the range <svg class="ico ico--xs"><use href="#i-chev"/></svg></a>
+          <a class="link-cta link-cta--ghost wa-link" href="#">Ask for pricing <svg class="ico ico--xs"><use href="#i-chev"/></svg></a>
+        </div>
+      </div>
+
+      <div class="hero__badge reveal" data-delay="4">
+        <img src="img/logo-mark.png" alt="AUM Enterprise emblem" width="132" height="150">
+      </div>
+
+      <a class="hero__scroll" href="#stats" aria-label="Scroll down"><span></span></a>
+    </section>
+
+    <!-- ══════════════ STATS ══════════════ -->
+    <section class="stats" id="stats">
+      <div class="wrap stats__grid">
+        <div class="stat reveal">
+          <span class="stat__num">1996</span>
+          <span class="stat__label">Trading since</span>
+        </div>
+        <div class="stat reveal" data-delay="1">
+          <span class="stat__num" data-count="30" data-suffix="+">30+</span>
+          <span class="stat__label">Years on the tools</span>
+        </div>
+        <div class="stat reveal" data-delay="2">
+          <span class="stat__num" data-count="6">6</span>
+          <span class="stat__label">Core categories</span>
+        </div>
+        <div class="stat reveal" data-delay="3">
+          <span class="stat__num">9–9</span>
+          <span class="stat__label">Open Mon to Sat</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ PRODUCT GRID ══════════════ -->
+    <section class="section section--light" id="products">
+      <div class="wrap">
+        <header class="shead reveal">
+          <p class="eyebrow eyebrow--dark">The range</p>
+          <h2 class="shead__title">Everything the job asks for.</h2>
+          <p class="shead__sub">Six categories, stocked deep. Genuine brands, real warranties, and someone
+            behind the counter who knows which one you actually need.</p>
+        </header>
+
+        <div class="tiles">
+          <article class="tile tile--wide reveal">
+            <div class="tile__text">
+              <h3>Welding machines</h3>
+              <p>Inverter ARC, MIG and TIG sets — light enough to carry up a scaffold, stable enough to run all day.</p>
+              <a class="link-cta link-cta--sm wa-link" href="#">Check stock <svg class="ico ico--xs"><use href="#i-chev"/></svg></a>
+            </div>
+            <div class="tile__art"><img src="img/welder.svg" alt="Inverter welding machine" loading="lazy"></div>
+          </article>
+
+          <article class="tile reveal" data-delay="1">
+            <div class="tile__text">
+              <h3>Helmets &amp; shields</h3>
+              <p>Auto-darkening, shade 9–13.</p>
+            </div>
+            <div class="tile__art"><img src="img/helmet.svg" alt="Auto-darkening welding helmet" loading="lazy"></div>
+          </article>
+
+          <article class="tile reveal" data-delay="2">
+            <div class="tile__text">
+              <h3>Torches &amp; holders</h3>
+              <p>MIG guns, TIG torches, earth clamps.</p>
+            </div>
+            <div class="tile__art"><img src="img/torch.svg" alt="MIG welding torch" loading="lazy"></div>
+          </article>
+
+          <article class="tile reveal" data-delay="1">
+            <div class="tile__text">
+              <h3>Electrodes &amp; wire</h3>
+              <p>E6013, E7018 and MIG spools.</p>
+            </div>
+            <div class="tile__art"><img src="img/electrodes.svg" alt="Welding electrodes" loading="lazy"></div>
+          </article>
+
+          <article class="tile reveal" data-delay="2">
+            <div class="tile__text">
+              <h3>Cables &amp; connectors</h3>
+              <p>Copper cable cut to length.</p>
+            </div>
+            <div class="tile__art"><img src="img/cable.svg" alt="Welding cable coil" loading="lazy"></div>
+          </article>
+
+          <article class="tile tile--wide tile--flip reveal" data-delay="3">
+            <div class="tile__text">
+              <h3>Power tools</h3>
+              <p>Angle grinders, drills, cut-off saws and the discs, bits and blades that keep them fed.</p>
+              <a class="link-cta link-cta--sm wa-link" href="#">Check stock <svg class="ico ico--xs"><use href="#i-chev"/></svg></a>
+            </div>
+            <div class="tile__art"><img src="img/grinder.svg" alt="Angle grinder" loading="lazy"></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ FEATURE: MACHINES ══════════════ -->
+    <section class="feature" id="machines">
+      <div class="wrap feature__grid">
+        <div class="feature__art reveal" data-parallax="0.06">
+          <img src="img/welder.svg" alt="Inverter welding machine front panel" loading="lazy">
+        </div>
+        <div class="feature__copy">
+          <p class="eyebrow reveal">Machines</p>
+          <h2 class="reveal" data-delay="1">Power that<br><em>holds the arc.</em></h2>
+          <p class="reveal" data-delay="2">
+            Modern inverter sets do more with less — steadier current, lower running cost,
+            and a fraction of the weight of the old transformer units. We stock the sizes that
+            actually get used around Sangli, from light fabrication to heavy structural work.
           </p>
-          <div class="hero-actions">
-            <a class="btn btn-primary wa-link" href="#">
-              <i class="fab fa-whatsapp"></i>
-              <span>WhatsApp Us</span>
+          <ul class="ticks reveal" data-delay="3">
+            <li>ARC / MMA, MIG and TIG configurations</li>
+            <li>Single and three-phase options</li>
+            <li>Demonstrated before you buy</li>
+            <li>Billed with full manufacturer warranty</li>
+          </ul>
+          <a class="link-cta reveal" data-delay="4" href="#contact">Talk to us about sizing <svg class="ico ico--xs"><use href="#i-chev"/></svg></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ FEATURE: SAFETY ══════════════ -->
+    <section class="feature feature--alt" id="safety">
+      <div class="wrap feature__grid feature__grid--flip">
+        <div class="feature__copy">
+          <p class="eyebrow reveal">Safety</p>
+          <h2 class="reveal" data-delay="1">See every<br><em>millimetre.</em></h2>
+          <p class="reveal" data-delay="2">
+            A good auto-darkening helmet switches in a fraction of a millisecond, so you keep
+            your eyes on the puddle and your hands where they should be. Pair it with the gloves,
+            sleeves and aprons that take the spatter instead of your skin.
+          </p>
+          <ul class="ticks reveal" data-delay="3">
+            <li>Auto-darkening helmets, shade 9–13</li>
+            <li>Leather gauntlets, aprons and sleeves</li>
+            <li>Goggles, face shields and respirators</li>
+            <li>Replacement lenses and spares in stock</li>
+          </ul>
+          <a class="link-cta reveal" data-delay="4" href="#contact">Kit out your team <svg class="ico ico--xs"><use href="#i-chev"/></svg></a>
+        </div>
+        <div class="feature__art reveal" data-parallax="0.06">
+          <img src="img/safety.svg" alt="Welding gauntlets and goggles" loading="lazy">
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ BANNER ══════════════ -->
+    <section class="banner">
+      <div class="banner__bg" data-parallax="0.18"><img src="img/workshop.svg" alt="" aria-hidden="true"></div>
+      <div class="wrap banner__body">
+        <h2 class="reveal">Bring us the job,<br>not just the part number.</h2>
+        <p class="reveal" data-delay="1">
+          Tell us what you're welding, how thick, and where. We'll tell you what will hold —
+          and what will only cost you a second trip.
+        </p>
+        <a class="btn btn--fill btn--lg wa-link reveal" data-delay="2" href="#">
+          <svg class="ico"><use href="#i-wa"/></svg><span>Start a WhatsApp chat</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ══════════════ SERVICES ══════════════ -->
+    <section class="section section--light" id="services">
+      <div class="wrap">
+        <header class="shead reveal">
+          <p class="eyebrow eyebrow--dark">Beyond the counter</p>
+          <h2 class="shead__title">The part that isn't in the box.</h2>
+        </header>
+
+        <div class="cards">
+          <article class="card reveal">
+            <span class="card__ico"><svg class="ico"><use href="#i-chat"/></svg></span>
+            <h3>Honest guidance</h3>
+            <p>Thirty years of watching what fails and what lasts. We'll steer you to the right rating rather than the biggest bill.</p>
+          </article>
+          <article class="card reveal" data-delay="1">
+            <span class="card__ico"><svg class="ico"><use href="#i-shield"/></svg></span>
+            <h3>Warranty support</h3>
+            <p>Purchases logged against your name. If a unit needs a claim, we handle the paperwork with the manufacturer.</p>
+          </article>
+          <article class="card reveal" data-delay="2">
+            <span class="card__ico"><svg class="ico"><use href="#i-wrench"/></svg></span>
+            <h3>Service &amp; spares</h3>
+            <p>Torches, holders, lenses, brushes and cables — the wear parts that keep a machine earning instead of sitting.</p>
+          </article>
+          <article class="card reveal" data-delay="3">
+            <span class="card__ico"><svg class="ico"><use href="#i-truck"/></svg></span>
+            <h3>Quick turnaround</h3>
+            <p>Stocked locally. Message a list in the morning and, more often than not, collect it the same day.</p>
+          </article>
+        </div>
+
+        <div class="trust reveal">
+          <span>Serving</span>
+          <em>fabrication shops</em><i></i>
+          <em>auto workshops</em><i></i>
+          <em>contractors</em><i></i>
+          <em>industrial units</em><i></i>
+          <em>ITI students</em>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ VISIT / CONTACT ══════════════ -->
+    <section class="section" id="visit">
+      <div class="wrap">
+        <header class="shead reveal">
+          <p class="eyebrow">Visit</p>
+          <h2 class="shead__title">Patel Chowk, Sangli.</h2>
+          <p class="shead__sub">Walk in, or send the list ahead. Both work.</p>
+        </header>
+
+        <div class="contact" id="contact">
+          <div class="contact__cards">
+            <a class="ccard ccard--wa wa-link reveal" href="#">
+              <svg class="ico"><use href="#i-wa"/></svg>
+              <h3>WhatsApp</h3>
+              <p>Fastest way to a price</p>
+              <span class="ccard__go phone-display">+91 82756 13310</span>
             </a>
-            <a class="btn btn-secondary" href="#products">
-              <i class="fas fa-box-open"></i>
-              <span>Our Products</span>
+            <a class="ccard phone-link reveal" data-delay="1" href="tel:+918275613310">
+              <svg class="ico"><use href="#i-phone"/></svg>
+              <h3>Call the shop</h3>
+              <p>Mon–Sat, 9 AM – 9 PM</p>
+              <span class="ccard__go">+91 82756 13310</span>
             </a>
-          </div>
-        </div>
-        <div class="hero-image">
-          <div class="image-showcase">
-            <div class="showcase-item">
-              <i class="fas fa-tools"></i>
-              <span>Power Tools</span>
-            </div>
-            <div class="showcase-item">
-              <i class="fas fa-fire"></i>
-              <span>Welding Machines</span>
-            </div>
-            <div class="showcase-item">
-              <i class="fas fa-bolt"></i>
-              <span>Welding Rods</span>
-            </div>
-            <div class="showcase-item">
-              <i class="fas fa-plug"></i>
-              <span>Cables & Wires</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="about" class="section">
-      <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">About AUM Enterprise</h2>
-          <p class="section-subtitle">
-            Your trusted partner for welding and power tool solutions since 1996
-          </p>
-        </div>
-        
-        <div class="about-content">
-          <p class="about-text">
-            Located at Patel Chowk, Sangli, we've been serving customers with quality welding products 
-            and power tools for over 25 years. We provide genuine products with expert guidance.
-          </p>
-          
-          <div class="features-grid">
-            <div class="feature-card">
-              <i class="fas fa-award"></i>
-              <h4>Quality Products</h4>
-              <p>Genuine brands only</p>
-            </div>
-            <div class="feature-card">
-              <i class="fas fa-users"></i>
-              <h4>Expert Support</h4>
-              <p>Professional guidance</p>
-            </div>
-            <div class="feature-card">
-              <i class="fas fa-shipping-fast"></i>
-              <h4>Quick Service</h4>
-              <p>Fast & reliable</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="products" class="section section-muted">
-      <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">Our Products</h2>
-          <p class="section-subtitle">Quality welding equipment and power tools</p>
-        </div>
-        
-        <div class="products-grid">
-          <div class="product-card">
-            <div class="product-icon">
-              <i class="fas fa-drill"></i>
-            </div>
-            <h4>Power Tools</h4>
-            <p>Professional grade tools</p>
-          </div>
-          
-          <div class="product-card">
-            <div class="product-icon">
-              <i class="fas fa-fire"></i>
-            </div>
-            <h4>Welding Machines</h4>
-            <p>All types of welding</p>
-          </div>
-          
-          <div class="product-card">
-            <div class="product-icon">
-              <i class="fas fa-bolt"></i>
-            </div>
-            <h4>Welding Rods</h4>
-            <p>Premium quality rods</p>
-          </div>
-          
-          <div class="product-card">
-            <div class="product-icon">
-              <i class="fas fa-plug"></i>
-            </div>
-            <h4>Welding Cables</h4>
-            <p>Durable & safe cables</p>
-          </div>
-          
-          <div class="product-card">
-            <div class="product-icon">
-              <i class="fas fa-cogs"></i>
-            </div>
-            <h4>Accessories</h4>
-            <p>Complete range</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="services" class="section">
-      <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">Our Services</h2>
-          <p class="section-subtitle">Complete support for all your needs</p>
-        </div>
-        
-        <div class="services-grid">
-          <div class="service-card">
-            <div class="service-icon">
-              <i class="fas fa-shopping-cart"></i>
-            </div>
-            <h4>Product Sales</h4>
-            <p>Wide selection of power tools and welding equipment</p>
-          </div>
-
-          <div class="service-card">
-            <div class="service-icon">
-              <i class="fas fa-tools"></i>
-            </div>
-            <h4>Technical Support</h4>
-            <p>Expert guidance and troubleshooting</p>
-          </div>
-
-          <div class="service-card">
-            <div class="service-icon">
-              <i class="fas fa-shield-alt"></i>
-            </div>
-            <h4>Warranty Support</h4>
-            <p>Complete warranty tracking and claims</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="contact" class="section section-muted">
-      <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">Contact Us</h2>
-          <p class="section-subtitle">Get in touch for all your welding and power tool needs</p>
-        </div>
-
-        <div class="contact-grid">
-          <div class="contact-info">
-            <div class="contact-card">
-              <div class="contact-icon">
-                <i class="fab fa-whatsapp"></i>
-              </div>
-              <h4>WhatsApp</h4>
-              <p>Quick response guaranteed</p>
-              <a href="#" class="contact-link wa-link">Chat with us</a>
-            </div>
-
-            <div class="contact-card">
-              <div class="contact-icon">
-                <i class="fas fa-phone"></i>
-              </div>
-              <h4>Phone</h4>
-              <p>Call for immediate help</p>
-              <a href="tel:+918275613310" class="contact-link phone-link">+91 82756 13310</a>
-            </div>
-
-            <div class="contact-card">
-              <div class="contact-icon">
-                <i class="fas fa-map-marker-alt"></i>
-              </div>
-              <h4>Visit Us</h4>
+            <a class="ccard reveal" data-delay="2" href="https://maps.google.com/?q=Patel+Chowk+Sangli" target="_blank" rel="noopener">
+              <svg class="ico"><use href="#i-pin"/></svg>
+              <h3>Counter</h3>
               <p>Patel Chowk, Sangli</p>
-              <span class="hours">Mon-Sat: 9AM-9PM</span>
-            </div>
-
-            <div class="contact-card">
-              <div class="contact-icon">
-                <i class="fas fa-envelope"></i>
-              </div>
-              <h4>Email</h4>
-              <p>Send us your requirements</p>
-              <a href="mailto:aumenterprise33@gmail.com" class="contact-link">aumenterprise33@gmail.com</a>
-            </div>
+              <span class="ccard__go">Open in Maps</span>
+            </a>
+            <a class="ccard reveal" data-delay="3" href="mailto:aumenterprise33@gmail.com">
+              <svg class="ico"><use href="#i-mail"/></svg>
+              <h3>Email</h3>
+              <p>Bulk and tender enquiries</p>
+              <span class="ccard__go">aumenterprise33@gmail.com</span>
+            </a>
           </div>
 
-          <div class="contact-form-card">
-            <h3>Send Message</h3>
-            <form class="contact-form" id="contactForm">
-              <input type="text" name="name" placeholder="Your Name" required>
-              <input type="tel" name="phone" placeholder="Phone Number" required>
-              <select name="subject" required>
-                <option value="">Select Subject</option>
-                <option value="product-inquiry">Product Inquiry</option>
-                <option value="price-quote">Price Quote</option>
-                <option value="technical-support">Technical Support</option>
-              </select>
-              <textarea name="message" placeholder="Your message..." rows="4" required></textarea>
-              <button type="submit" class="btn btn-primary btn-full">
-                <i class="fas fa-paper-plane"></i>
-                <span>Send Message</span>
+          <div class="formcard reveal">
+            <h3>Send your requirement</h3>
+            <p class="formcard__note">Goes straight to our WhatsApp — no account, no waiting.</p>
+            <form class="form" id="contactForm" novalidate>
+              <div class="field">
+                <input type="text" id="f-name" name="name" placeholder=" " required autocomplete="name">
+                <label for="f-name">Your name</label>
+              </div>
+              <div class="field">
+                <input type="tel" id="f-phone" name="phone" placeholder=" " required autocomplete="tel"
+                       inputmode="tel" pattern="[0-9+\s-]{10,15}">
+                <label for="f-phone">Phone number</label>
+              </div>
+              <div class="field field--select">
+                <select id="f-subject" name="subject" required>
+                  <option value="" selected disabled></option>
+                  <option value="Product enquiry">Product enquiry</option>
+                  <option value="Price quote">Price quote</option>
+                  <option value="Bulk / site order">Bulk / site order</option>
+                  <option value="Technical support">Technical support</option>
+                  <option value="Warranty / service">Warranty / service</option>
+                </select>
+                <label for="f-subject">What is it about?</label>
+                <svg class="ico ico--xs field__chev"><use href="#i-chev-d"/></svg>
+              </div>
+              <div class="field">
+                <textarea id="f-message" name="message" rows="4" placeholder=" " required></textarea>
+                <label for="f-message">What do you need?</label>
+              </div>
+              <button type="submit" class="btn btn--fill btn--block">
+                <svg class="ico"><use href="#i-wa"/></svg><span>Send on WhatsApp</span>
               </button>
             </form>
           </div>
         </div>
       </div>
     </section>
-
   </main>
 
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-content">
-        <div class="footer-main">
-          <div class="footer-brand">
-            <div class="footer-logo">
-              <i class="fas fa-tools"></i>
-              <span>AUM Enterprise</span>
-            </div>
-            <p class="footer-tagline">Professional welding & power tools since 1996</p>
-            <p class="footer-location">Patel Chowk, Sangli • Mon-Sat: 9AM-9PM</p>
-          </div>
-
-          <div class="footer-links">
-            <h4>Quick Links</h4>
-            <ul class="footer-nav">
-              <li><a href="#home">Home</a></li>
-              <li><a href="#about">About</a></li>
-              <li><a href="#products">Products</a></li>
-              <li><a href="#services">Services</a></li>
-              <li><a href="#contact">Contact</a></li>
-            </ul>
-          </div>
-
-          <div class="footer-contact">
-            <h4>Contact Info</h4>
-            <div class="contact-item">
-              <i class="fas fa-phone"></i>
-              <span class="phone-display">+91 82756 13310</span>
-            </div>
-            <div class="contact-item">
-              <i class="fab fa-whatsapp"></i>
-              <span>WhatsApp Available</span>
-            </div>
-            <div class="contact-item">
-              <i class="fas fa-envelope"></i>
-              <span>aumenterprise33@gmail.com</span>
-            </div>
+  <!-- ══════════════ FOOTER ══════════════ -->
+  <footer class="foot">
+    <div class="wrap">
+      <div class="foot__top">
+        <div class="foot__brand">
+          <img src="img/logo-mark.png" alt="" width="44" height="50">
+          <div>
+            <strong>AUM Enterprise</strong>
+            <span>Welding machines &amp; safety equipment</span>
           </div>
         </div>
 
-        <div class="footer-bottom">
-          <div class="footer-copyright">
-            <p>&copy; 2024 AUM Enterprise. All rights reserved.</p>
-          </div>
-          <div class="footer-admin">
-            <a href="admin/login.html" class="admin-link">
-              <i class="fas fa-lock"></i>
-              <span>Admin</span>
-            </a>
-          </div>
+        <div class="foot__col">
+          <h4>Range</h4>
+          <a href="#products">Welding machines</a>
+          <a href="#products">Helmets &amp; safety</a>
+          <a href="#products">Electrodes &amp; wire</a>
+          <a href="#products">Cables &amp; connectors</a>
+          <a href="#products">Power tools</a>
         </div>
+
+        <div class="foot__col">
+          <h4>Company</h4>
+          <a href="#machines">Machines</a>
+          <a href="#safety">Safety</a>
+          <a href="#services">Services</a>
+          <a href="#visit">Visit us</a>
+        </div>
+
+        <div class="foot__col">
+          <h4>Reach us</h4>
+          <a class="phone-link" href="tel:+918275613310">+91 82756 13310</a>
+          <a href="mailto:aumenterprise33@gmail.com">aumenterprise33@gmail.com</a>
+          <span>Patel Chowk, Sangli</span>
+          <span>Mon–Sat · 9 AM – 9 PM</span>
+        </div>
+      </div>
+
+      <div class="foot__bar">
+        <p>&copy; <span id="year">2026</span> AUM Enterprise. All rights reserved.</p>
+        <a class="foot__admin" href="admin/login.html"><svg class="ico ico--xs"><use href="#i-lock"/></svg> Admin</a>
       </div>
     </div>
   </footer>
+
+  <a class="wa-fab wa-link" href="#" aria-label="Chat on WhatsApp">
+    <svg class="ico"><use href="#i-wa"/></svg>
+  </a>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HardwareStore",
+    "name": "AUM Enterprise",
+    "description": "Welding machines, safety equipment, electrodes, cables and power tools.",
+    "image": "img/logo-mark.png",
+    "telephone": "+91-82756-13310",
+    "email": "aumenterprise33@gmail.com",
+    "foundingDate": "1996",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Patel Chowk",
+      "addressLocality": "Sangli",
+      "addressRegion": "Maharashtra",
+      "addressCountry": "IN"
+    },
+    "openingHoursSpecification": [{
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+      "opens": "09:00",
+      "closes": "21:00"
+    }]
+  }
+  </script>
 
   <script src="script.js"></script>
 </body>

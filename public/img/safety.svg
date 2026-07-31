@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Welding gauntlets and goggles">
+  <defs>
+    <linearGradient id="sHide" x1=".2" y1="0" x2=".8" y2="1">
+      <stop offset="0" stop-color="#f2d7b1"/><stop offset=".38" stop-color="#d0a877"/>
+      <stop offset=".76" stop-color="#94714a"/><stop offset="1" stop-color="#60472c"/>
+    </linearGradient>
+    <linearGradient id="sHideBack" x1=".2" y1="0" x2=".8" y2="1">
+      <stop offset="0" stop-color="#cdac81"/><stop offset=".45" stop-color="#9c7950"/><stop offset="1" stop-color="#4e3a24"/>
+    </linearGradient>
+    <linearGradient id="sCuff" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5b86b8"/><stop offset=".42" stop-color="#28517f"/><stop offset="1" stop-color="#102941"/>
+    </linearGradient>
+    <linearGradient id="sCuffBack" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#40658f"/><stop offset="1" stop-color="#0c1e31"/>
+    </linearGradient>
+    <linearGradient id="sLensDark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#123240"/><stop offset=".5" stop-color="#05161e"/><stop offset="1" stop-color="#0e2b38"/>
+    </linearGradient>
+    <linearGradient id="sFrame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3f6fa"/><stop offset=".5" stop-color="#a3adb9"/><stop offset="1" stop-color="#5a636e"/>
+    </linearGradient>
+    <radialGradient id="sGlow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#f4801f" stop-opacity=".2"/><stop offset="1" stop-color="#f4801f" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="sShadow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#000" stop-opacity=".5"/><stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- one gauntlet, drawn once and reused -->
+    <g id="gauntlet">
+      <!-- fingers -->
+      <rect x="-58" y="-238" width="34" height="118" rx="17"/>
+      <rect x="-20" y="-256" width="35" height="136" rx="17.5"/>
+      <rect x="19"  y="-248" width="35" height="128" rx="17.5"/>
+      <rect x="58"  y="-222" width="33" height="102" rx="16.5"/>
+      <!-- thumb -->
+      <path d="M-62 -128 l-52 -34 a26 26 0 0 1 26 -45 l54 32 z"/>
+      <!-- palm -->
+      <rect x="-62" y="-186" width="154" height="176" rx="34"/>
+    </g>
+  </defs>
+
+  <circle cx="400" cy="300" r="300" fill="url(#sGlow)"/>
+  <ellipse cx="400" cy="540" rx="240" ry="36" fill="url(#sShadow)"/>
+
+  <!-- goggles, sitting behind and above the gloves -->
+  <g transform="translate(400 104) scale(.76)">
+    <path d="M-176 8 q-30 -6 -34 14 q-2 20 30 20" fill="none" stroke="#1a222b" stroke-width="16" stroke-linecap="round"/>
+    <path d="M176 8 q30 -6 34 14 q2 20 -30 20" fill="none" stroke="#1a222b" stroke-width="16" stroke-linecap="round"/>
+    <rect x="-184" y="-38" width="368" height="94" rx="40" fill="url(#sFrame)"/>
+    <rect x="-170" y="-24" width="340" height="66" rx="30" fill="#141b23"/>
+    <rect x="-156" y="-14" width="140" height="46" rx="20" fill="url(#sLensDark)"/>
+    <rect x="16" y="-14" width="140" height="46" rx="20" fill="url(#sLensDark)"/>
+    <path d="M-148 30 L-104 -10 L-84 -10 L-128 30 Z" fill="#cfe4f2" opacity=".22"/>
+    <path d="M24 30 L68 -10 L88 -10 L44 30 Z" fill="#cfe4f2" opacity=".22"/>
+    <rect x="-14" y="-16" width="28" height="50" rx="10" fill="#69737f"/>
+  </g>
+
+  <!-- back gauntlet -->
+  <g transform="translate(508 386) rotate(16) scale(.94)">
+    <use href="#gauntlet" fill="url(#sHideBack)"/>
+    <rect x="-76" y="-14" width="182" height="128" rx="26" fill="url(#sCuffBack)"/>
+    <rect x="-76" y="-14" width="182" height="36" rx="18" fill="#fff" opacity=".07"/>
+    <g stroke="#091827" stroke-width="3" opacity=".45">
+      <path d="M-76 44 h182"/><path d="M-76 74 h182"/>
+    </g>
+  </g>
+
+  <!-- front gauntlet -->
+  <g transform="translate(316 400) rotate(-12)">
+    <use href="#gauntlet" fill="url(#sHide)"/>
+    <!-- finger separations + knuckle stitching -->
+    <g stroke="#7a5836" stroke-width="4" stroke-linecap="round" opacity=".55">
+      <path d="M-22 -206 v78"/><path d="M17 -216 v88"/><path d="M56 -204 v76"/>
+    </g>
+    <g stroke="#6b4c2e" stroke-width="3" stroke-dasharray="9 8" fill="none" opacity=".7">
+      <path d="M-46 -104 h130"/>
+      <path d="M-2 -104 v-24"/>
+      <path d="M37 -104 v-24"/>
+    </g>
+    <!-- highlight -->
+    <path d="M-62 -152 a34 34 0 0 1 34 -34 h122 v34 z" fill="#fff" opacity=".13"/>
+    <rect x="-80" y="-8" width="192" height="136" rx="28" fill="url(#sCuff)"/>
+    <rect x="-80" y="-8" width="192" height="40" rx="20" fill="#fff" opacity=".12"/>
+    <g stroke="#091827" stroke-width="3" opacity=".45">
+      <path d="M-80 56 h192"/><path d="M-80 88 h192"/>
+    </g>
+    <text x="16" y="112" font-family="Inter,sans-serif" font-size="17" font-weight="800"
+          fill="#c3dbf2" letter-spacing="5" text-anchor="middle" opacity=".85">AUM</text>
+  </g>
+</svg>

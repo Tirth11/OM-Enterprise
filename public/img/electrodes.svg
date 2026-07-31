@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Welding electrodes and rods">
+  <defs>
+    <linearGradient id="eFlux" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef2f7"/><stop offset=".22" stop-color="#b9c3cf"/>
+      <stop offset=".62" stop-color="#78828f"/><stop offset="1" stop-color="#454e59"/>
+    </linearGradient>
+    <linearGradient id="eFluxWarm" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7e2c9"/><stop offset=".25" stop-color="#d6b189"/>
+      <stop offset=".65" stop-color="#94714c"/><stop offset="1" stop-color="#5a422a"/>
+    </linearGradient>
+    <linearGradient id="eTip" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe0bd"/><stop offset=".35" stop-color="#e0954c"/><stop offset="1" stop-color="#8a4f16"/>
+    </linearGradient>
+    <linearGradient id="eBand" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff9d3f"/><stop offset="1" stop-color="#d0660c"/>
+    </linearGradient>
+    <radialGradient id="eGlow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#f4801f" stop-opacity=".26"/><stop offset="1" stop-color="#f4801f" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="eShadow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#000" stop-opacity=".5"/><stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <circle cx="400" cy="300" r="300" fill="url(#eGlow)"/>
+  <ellipse cx="400" cy="500" rx="270" ry="40" fill="url(#eShadow)"/>
+
+  <g transform="translate(392 300)">
+    <!-- fanned rods: long flux-coated body + short bare copper tip -->
+    <g transform="rotate(-24)">
+      <rect x="-286" y="-11" width="512" height="22" rx="11" fill="url(#eFluxWarm)"/>
+      <rect x="-286" y="-11" width="512" height="8" rx="4" fill="#fff" opacity=".22"/>
+      <rect x="220" y="-8" width="72" height="16" rx="8" fill="url(#eTip)"/>
+      <rect x="220" y="-8" width="72" height="6" rx="3" fill="#ffe1c2" opacity=".45"/>
+    </g>
+
+    <g transform="rotate(-8) translate(0 5)">
+      <rect x="-298" y="-12" width="536" height="24" rx="12" fill="url(#eFlux)"/>
+      <rect x="-298" y="-12" width="536" height="9" rx="4" fill="#fff" opacity=".3"/>
+      <rect x="232" y="-9" width="76" height="18" rx="9" fill="url(#eTip)"/>
+      <rect x="232" y="-9" width="76" height="6" rx="3" fill="#ffe1c2" opacity=".5"/>
+    </g>
+
+    <g transform="rotate(7) translate(0 10)">
+      <rect x="-292" y="-11" width="524" height="22" rx="11" fill="url(#eFlux)"/>
+      <rect x="-292" y="-11" width="524" height="8" rx="4" fill="#fff" opacity=".24"/>
+      <rect x="226" y="-8" width="74" height="16" rx="8" fill="url(#eTip)"/>
+      <rect x="226" y="-8" width="74" height="6" rx="3" fill="#ffe1c2" opacity=".45"/>
+    </g>
+
+    <g transform="rotate(22) translate(0 14)">
+      <rect x="-280" y="-10" width="500" height="20" rx="10" fill="url(#eFluxWarm)"/>
+      <rect x="-280" y="-10" width="500" height="7" rx="4" fill="#fff" opacity=".2"/>
+      <rect x="214" y="-7" width="70" height="14" rx="7" fill="url(#eTip)"/>
+      <rect x="214" y="-7" width="70" height="5" rx="2.5" fill="#ffe1c2" opacity=".45"/>
+    </g>
+
+    <!-- binding band -->
+    <g transform="rotate(-3)">
+      <rect x="-158" y="-80" width="74" height="160" rx="20" fill="#101720" opacity=".92"/>
+      <rect x="-158" y="-80" width="74" height="160" rx="20" fill="none" stroke="#3b4653" stroke-width="2"/>
+      <rect x="-148" y="-60" width="54" height="120" rx="13" fill="none" stroke="#f4801f" stroke-width="3" opacity=".7"/>
+      <text x="-121" y="7" font-family="Inter,sans-serif" font-size="15" font-weight="800" fill="#dbe4ee"
+            letter-spacing="3" text-anchor="middle" transform="rotate(-90 -121 0)">E6013</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="MIG welding torch">
+  <defs>
+    <linearGradient id="tGrip" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#33404e"/><stop offset=".45" stop-color="#1b232c"/><stop offset="1" stop-color="#0c1015"/>
+    </linearGradient>
+    <linearGradient id="tBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4f8fd0"/><stop offset=".5" stop-color="#20548c"/><stop offset="1" stop-color="#0f2b4a"/>
+    </linearGradient>
+    <linearGradient id="tChrome" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".28" stop-color="#c9d2dc"/>
+      <stop offset=".55" stop-color="#6f7986"/><stop offset=".8" stop-color="#b3bcc7"/><stop offset="1" stop-color="#4e5763"/>
+    </linearGradient>
+    <linearGradient id="tCopper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6b98a"/><stop offset=".4" stop-color="#c9762f"/><stop offset="1" stop-color="#7c400f"/>
+    </linearGradient>
+    <linearGradient id="tCable" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a333d"/><stop offset=".4" stop-color="#12181e"/><stop offset="1" stop-color="#080b0e"/>
+    </linearGradient>
+    <radialGradient id="tArc" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".18" stop-color="#bfeeff"/>
+      <stop offset=".45" stop-color="#4aa8e8" stop-opacity=".55"/><stop offset="1" stop-color="#4aa8e8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="tGlow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#2a6fb5" stop-opacity=".35"/><stop offset="1" stop-color="#2a6fb5" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="tShadow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#000" stop-opacity=".5"/><stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <circle cx="400" cy="300" r="300" fill="url(#tGlow)"/>
+  <ellipse cx="400" cy="520" rx="250" ry="34" fill="url(#tShadow)"/>
+
+  <!-- supply cable -->
+  <path d="M700 470 C620 470 560 440 520 404" fill="none" stroke="url(#tCable)" stroke-width="46" stroke-linecap="round"/>
+  <path d="M700 456 C624 456 566 428 528 394" fill="none" stroke="#3b4653" stroke-width="3" opacity=".55"/>
+
+  <!-- strain relief -->
+  <g transform="rotate(-38 505 392)">
+    <rect x="462" y="366" width="86" height="52" rx="18" fill="#151b22"/>
+    <g stroke="#39434f" stroke-width="3">
+      <path d="M478 366 v52"/><path d="M496 366 v52"/><path d="M514 366 v52"/><path d="M532 366 v52"/>
+    </g>
+  </g>
+
+  <!-- handle -->
+  <g transform="rotate(-38 400 340)">
+    <rect x="286" y="292" width="222" height="98" rx="46" fill="url(#tGrip)"/>
+    <rect x="286" y="292" width="222" height="46" rx="30" fill="#fff" opacity=".05"/>
+    <rect x="300" y="300" width="150" height="82" rx="38" fill="url(#tBlue)"/>
+    <rect x="300" y="300" width="150" height="34" rx="20" fill="#fff" opacity=".12"/>
+    <!-- grip ribs -->
+    <g stroke="#0a0e13" stroke-opacity=".5" stroke-width="5" stroke-linecap="round">
+      <path d="M330 352 v24"/><path d="M352 354 v24"/><path d="M374 354 v24"/><path d="M396 352 v24"/>
+    </g>
+    <text x="376" y="332" font-family="Inter,sans-serif" font-size="17" font-weight="800"
+          fill="#cfe2f5" letter-spacing="3" text-anchor="middle" opacity=".75">AUM</text>
+  </g>
+
+  <!-- trigger -->
+  <path d="M338 392 q-30 24 -14 56 q26 -6 44 -30 Z" fill="#0d1218"/>
+  <path d="M342 396 q-24 20 -12 44 q20 -6 34 -24 Z" fill="#f4801f" opacity=".9"/>
+
+  <!-- swan neck -->
+  <path d="M470 236 q64 -66 128 -30" fill="none" stroke="#0b0f14" stroke-width="42" stroke-linecap="round"/>
+  <path d="M470 236 q64 -66 128 -30" fill="none" stroke="url(#tChrome)" stroke-width="32" stroke-linecap="round"/>
+  <path d="M474 224 q60 -56 118 -26" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity=".45"/>
+
+  <!-- nozzle -->
+  <g transform="rotate(28 610 214)">
+    <rect x="566" y="182" width="96" height="64" rx="14" fill="url(#tChrome)"/>
+    <rect x="566" y="182" width="96" height="20" rx="10" fill="#fff" opacity=".35"/>
+    <rect x="654" y="188" width="26" height="52" rx="10" fill="#39434f"/>
+    <rect x="676" y="200" width="34" height="28" rx="12" fill="url(#tCopper)"/>
+    <rect x="676" y="200" width="34" height="10" rx="5" fill="#ffd3ae" opacity=".55"/>
+  </g>
+
+  <!-- contact tip + arc -->
+  <circle cx="712" cy="168" r="70" fill="url(#tArc)"/>
+  <circle cx="712" cy="168" r="11" fill="#ffffff"/>
+  <g stroke="#bfeeff" stroke-width="2.5" stroke-linecap="round" opacity=".85">
+    <path d="M712 168 L760 128"/><path d="M712 168 L764 178"/><path d="M712 168 L744 216"/>
+    <path d="M712 168 L676 120"/><path d="M712 168 L662 190"/>
+  </g>
+  <g fill="#ffbb6b">
+    <circle cx="770" cy="120" r="3.5"/><circle cx="784" cy="186" r="2.5"/><circle cx="748" cy="234" r="3"/>
+    <circle cx="654" cy="112" r="2.5"/><circle cx="636" cy="200" r="3"/><circle cx="700" cy="252" r="2"/>
+  </g>
+</svg>
